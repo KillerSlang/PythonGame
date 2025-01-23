@@ -1,8 +1,8 @@
 import pygame
 import sys
-import subprocess
-import time
 import random
+import time
+import subprocess
 
 # Initialize Pygame
 pygame.init()
@@ -15,163 +15,117 @@ else:
 
 # Set up the display
 screen = pygame.display.set_mode((1200, 700))
-pygame.display.set_caption(f"Simple Pygame Window - {character_name}")
+pygame.display.set_caption(f"World Map, Character selected: - {character_name}")
 
-character_stats = {
-    "Gunner": "Health: 100\nAttack: 55\nDefense: 35",
-    "Swordman": "Health: 120\nAttack: 40\nDefense: 40",
-    "Warlock": "Health: 80\nAttack: 70\nDefense: 20"
-}
-
+# Grid setup
 box_size = 25
 cols = 1200 // box_size
 rows = 700 // box_size
 
-# Initialize the grid
-grid = [[0 for _ in range(cols)] for _ in range(rows)]
-red_boxes = set()  # Set to keep track of red boxes
+def starting_grid():
+    grid = [[0 for _ in range(cols)] for _ in range(rows)]
+    start_x = (cols // 2) - 1
+    start_y = rows - 3
+    for y in range(start_y, start_y + 3):
+        for x in range(start_x, start_x + 3):
+            grid[y][x] = 1
+    return grid
 
-# Directions for moving in the grid
-directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+def random_field(grid, direction, dot_position):
+    # Define possible larger shapes
+    shapes = [
+        [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)],  # Large Square
+        [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],  # Long Line
+        [(0, 0), (0, 1), (0, 2), (0, 3), (1, 1), (1, 2)],  # Large T-shape
+        [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (3, 2)],  # Large Z-shape
+        [(0, 2), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]   # Large S-shape
+    ]
 
-def is_valid(x, y):
-    return 0 <= x < cols and 0 <= y < rows
+    # Select a random shape
+    shape = random.choice(shapes)
 
-def generate_random_grid(start_x, start_y):
-    width = random.randint(2, 5)
-    height = random.randint(2, 5)
-    for y in range(start_y, start_y + height):
-        for x in range(start_x, start_x + width):
-            if is_valid(x, y):
-                grid[y][x] = 1
+    # Determine attachment position based on direction
+    dot_x, dot_y = dot_position
+    if direction == "up":
+        attach_x, attach_y = dot_x, dot_y - 1  # Attach above the dot
+    elif direction == "down":
+        attach_x, attach_y = dot_x, dot_y + 1  # Attach below the dot
+    elif direction == "left":
+        attach_x, attach_y = dot_x - 1, dot_y  # Attach to the left of the dot
+    elif direction == "right":
+        attach_x, attach_y = dot_x + 1, dot_y  # Attach to the right of the dot
 
-def move_dot(x, y, direction):
-    if direction == 'w' and is_valid(x, y - 1):
-        if grid[y - 1][x] == 1:
-            y -= 1
-        else:
-            if not check_existing_box(x, y - 1, 'w'):
-                generate_new_grid(x, y - 1, 'w')
-                y -= 1
-            else:
-                shake_dot()
-                mark_box_red(x, y - 1)
-    elif direction == 's' and is_valid(x, y + 1):
-        if grid[y + 1][x] == 1:
-            y += 1
-        else:
-            if not check_existing_box(x, y + 1, 's'):
-                generate_new_grid(x, y + 1, 's')
-                y += 1
-            else:
-                shake_dot()
-                mark_box_red(x, y + 1)
-    elif direction == 'a' and is_valid(x - 1, y):
-        if grid[y][x - 1] == 1:
-            x -= 1
-        else:
-            if not check_existing_box(x - 1, y, 'a'):
-                generate_new_grid(x - 1, y, 'a')
-                x -= 1
-            else:
-                shake_dot()
-                mark_box_red(x - 1, y)
-    elif direction == 'd' and is_valid(x + 1, y):
-        if grid[y][x + 1] == 1:
-            x += 1
-        else:
-            if not check_existing_box(x + 1, y, 'd'):
-                generate_new_grid(x + 1, y, 'd')
-                x += 1
-            else:
-                shake_dot()
-                mark_box_red(x + 1, y)
-    return x, y
+    # Adjust shape position to ensure it connects to the existing field
+    for dx, dy in shape:
+        x = attach_x + dx
+        y = attach_y + dy
+        if 0 <= x < cols and 0 <= y < rows:
+            grid[y][x] = 1
 
-def check_existing_box(x, y, direction):
-    if direction == 'w':
-        start_x = x - 1
-        start_y = y - 2
-    elif direction == 's':
-        start_x = x - 1
-        start_y = y + 1
-    elif direction == 'a':
-        start_x = x - 2
-        start_y = y - 1
-    elif direction == 'd':
-        start_x = x + 1
-        start_y = y - 1
+    return grid
 
-    width = random.randint(2, 5)
-    height = random.randint(2, 5)
-    for y in range(start_y, start_y + height):
-        for x in range(start_x, start_x + width):
-            if is_valid(x, y) and grid[y][x] == 1:
-                return True
+# Define the color for the grid cells
+grid_color = (255, 255, 255)  # White
+
+def draw_grid(grid):
+    for y in range(rows):
+        for x in range(cols):
+            if grid[y][x] == 1:
+                pygame.draw.rect(screen, grid_color, (x * box_size, y * box_size, box_size, box_size), 1)
+
+# Define the initial position of the red dot
+dot_position = [cols // 2, rows - 2]
+
+# Define the color for the red dot
+dot_color = (255, 0, 0)  # Red
+
+def draw_dot(position):
+    pygame.draw.circle(screen, dot_color, (position[0] * box_size + box_size // 2, position[1] * box_size + box_size // 2), box_size // 4)
+
+def can_move_to(position, grid):
+    x, y = position
+    if 0 <= x < cols and 0 <= y < rows:
+        return grid[y][x] == 1
     return False
 
-def generate_new_grid(dot_x, dot_y, direction):
-    if direction == 'w':
-        start_x = dot_x - 1
-        start_y = dot_y - 2
-    elif direction == 's':
-        start_x = dot_x - 1
-        start_y = dot_y + 1
-    elif direction == 'a':
-        start_x = dot_x - 2
-        start_y = dot_y - 1
-    elif direction == 'd':
-        start_x = dot_x + 1
-        start_y = dot_y - 1
-
-    generate_random_grid(start_x, start_y)
-    grid[dot_y][dot_x] = 1  # Ensure the box with the dot always has borders
-
-def shake_dot():
-    global shake_offset_x, shake_offset_y
-    shake_offset_x = random.randint(-2, 2)
-    shake_offset_y = random.randint(-2, 2)
-
-def mark_box_red(x, y):
-    global red_boxes
-    red_boxes.add((x, y))
-
-# Main loop
+# Main game loop
 running = True
-generate_random_grid(cols // 2 - 1, rows - 3)  # Call the function to generate the initial random grid
-dot_x, dot_y = cols // 2, rows - 2  # Start the dot in the middle of the initial grid
-grid[dot_y][dot_x] = 1  # Ensure the initial box with the dot has borders
-shake_offset_x, shake_offset_y = 0, 0  # Initialize shake offsets
-
+grid = starting_grid()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_w:
-                dot_x, dot_y = move_dot(dot_x, dot_y, 'w')
-            elif event.key == pygame.K_s:
-                dot_x, dot_y = move_dot(dot_x, dot_y, 's')
-            elif event.key == pygame.K_a:
-                dot_x, dot_y = move_dot(dot_x, dot_y, 'a')
-            elif event.key == pygame.K_d:
-                dot_x, dot_y = move_dot(dot_x, dot_y, 'd')
+            new_position = dot_position[:]
+            direction = None
+            if event.key == pygame.K_a:  # Move left
+                new_position[0] -= 1
+                direction = "left"
+            elif event.key == pygame.K_d:  # Move right
+                new_position[0] += 1
+                direction = "right"
+            elif event.key == pygame.K_w:  # Move up
+                new_position[1] -= 1
+                direction = "up"
+            elif event.key == pygame.K_s:  # Move down
+                new_position[1] += 1
+                direction = "down"
+
+            # Check if the new position is valid
+            if can_move_to(new_position, grid):
+                dot_position = new_position
+            elif direction:
+                # Generate a random field in the direction of the attempted move
+                grid = random_field(grid, direction, dot_position)
 
     # Fill the screen with a black background
     screen.fill((0, 0, 0))
 
-    # Draw the grid with white borders
-    for y in range(rows):
-        for x in range(cols):
-            if grid[y][x] == 1:
-                color = (255, 0, 0) if (x, y) in red_boxes else (255, 255, 255)
-                pygame.draw.rect(screen, color, pygame.Rect(x * box_size, y * box_size, box_size, box_size), 1)
+    # Draw the grid
+    draw_grid(grid)
 
-    # Draw the dot with a small random offset to make it shake
-    pygame.draw.circle(screen, (255, 0, 0), (dot_x * box_size + box_size // 2 + shake_offset_x, dot_y * box_size + box_size // 2 + shake_offset_y), box_size // 4)
-
-    # Reset shake offsets
-    shake_offset_x, shake_offset_y = 0, 0
+    # Draw the red dot
+    draw_dot(dot_position)
 
     # Update the display
     pygame.display.flip()
