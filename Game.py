@@ -31,38 +31,136 @@ def starting_grid():
             grid[y][x] = 1
     return grid
 
+last_shape = None
+
+def rotate_shape_left(shape):
+    return [(-y, x) for x, y in shape]
+
+def rotate_shape_right(shape):
+    return [(y, x) for x, y in shape]
+
+def rotate_shape_down(shape):
+    return [(x, y) for x, y in shape]
+
+def rotate_shape_up(shape):
+    return [(x, -y) for x, y in shape]
+
 def random_field(grid, direction, dot_position):
-    # Define possible larger shapes
-    shapes = [
-        [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)],  # Large Square
-        [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],  # Long Line
-        [(0, 0), (0, 1), (0, 2), (0, 3), (1, 1), (1, 2)],  # Large T-shape
-        [(0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (3, 2)],  # Large Z-shape
-        [(0, 2), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]   # Large S-shape
-    ]
+    global last_shape
 
-    # Select a random shape
-    shape = random.choice(shapes)
+    # Define possible shapes with names
+    shapes = {
+        "Large Square": [(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2)],
+        "Long Line": [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)],
+        "Large T-shape": [(0, 0), (1, 0), (2, 0), (3, 0), (1, 1), (2, 1)],
+        "Large Z-shape": [(0, 0), (1, 1), (0, 1), (2, 2), (1, 2), (0, 2)],
+        "Large S-shape": [(2, 0), (1, 1), (2, 1), (0, 2), (1, 2), (2, 2)],
+        "Small Line": [(0, 0), (0, 1), (0, 2)],
+        "O shape": [(0, 0), (1, 0), (2, 0), (0, 1), (2, 1), (0, 2), (1, 2), (2, 2)],
+        "Large Plus": [(1, 0), (0, 1), (1, 1), (2, 1), (1, 2)],
+        "Small U-shape": [(0, 0), (1, 0), (2, 0), (0, 1), (2, 1)],
+        "J-shape": [(0, 0), (0, 1), (0, 2), (1, 2)],
+        "SnakeLeft": [(2, 0), (2, 1), (1, 1), (1, 2), (0, 2), (0, 3)],
+        "SnakeRight": [(0, 0), (0, 1), (1, 1), (1, 2), (2, 2), (2, 3)]
+    }
 
-    # Determine attachment position based on direction
-    dot_x, dot_y = dot_position
-    if direction == "up":
-        attach_x, attach_y = dot_x, dot_y - 1  # Attach above the dot
-    elif direction == "down":
-        attach_x, attach_y = dot_x, dot_y + 1  # Attach below the dot
-    elif direction == "left":
-        attach_x, attach_y = dot_x - 1, dot_y  # Attach to the left of the dot
+    # Select a random shape that is different from the last one
+    new_shape_name, new_shape_coords = random.choice(list(shapes.items()))
+    while new_shape_coords == last_shape:
+        new_shape_name, new_shape_coords = random.choice(list(shapes.items()))
+
+    last_shape = new_shape_coords
+
+    # You can now use new_shape_name and new_shape_coords as needed
+
+    # Print the shape to the console
+    print("Shape to be placed:" + new_shape_name)
+    for dx, dy in new_shape_coords:
+        print(f"({dx}, {dy})")
+
+    # Rotate shape based on direction
+    if direction == "left":
+        shape = rotate_shape_left(new_shape_coords)
     elif direction == "right":
-        attach_x, attach_y = dot_x + 1, dot_y  # Attach to the right of the dot
+        shape = rotate_shape_right(new_shape_coords)
+    elif direction == "down":
+        shape = rotate_shape_down(new_shape_coords)
+    elif direction == "up":
+        shape = rotate_shape_up(new_shape_coords)  # This rotation flips the shape upside-down
+    else:
+        shape = new_shape_coords  # No rotation if direction is not specified
 
-    # Adjust shape position to ensure it connects to the existing field
+    # Print the rotated shape to the console
+    print("Rotated shape:")
     for dx, dy in shape:
-        x = attach_x + dx
-        y = attach_y + dy
-        if 0 <= x < cols and 0 <= y < rows:
-            grid[y][x] = 1
+        print(f"({dx}, {dy})")
+
+    # Adjust shape position to ensure it connects to the desired position
+    attach_x, attach_y = dot_position  # Use the desired position as the reference
+
+    # Check if the shape can be placed without overlapping existing boxes
+    can_place = True
+    for dx, dy in shape:
+        if direction == "up":
+            x = attach_x + dx
+            y = attach_y + dy  # Keep dy consistent with the shape's natural orientation
+        else:
+            x = attach_x + dx
+            y = attach_y + dy
+
+        if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1:
+            can_place = False
+            print(f"Error: Shape cannot be placed at ({attach_x}, {attach_y}) due to collision or out-of-bounds.")
+            break
+
+    if can_place:
+        # Place the shape onto the grid
+        for dx, dy in shape:
+            if direction == "up":
+                if new_shape_name == "O shape" or new_shape_name == "Large Square" or new_shape_name == "Small U-shape" or new_shape_name == "Large Plus":
+                    x = attach_x + dx - 1
+                    y = attach_y - abs(dy)
+                elif new_shape_name == "Large S-shape" or new_shape_name == "SnakeLeft":
+                    x = attach_x + dx -2
+                    y = attach_y - abs(dy)
+                else:
+                    x = attach_x + dx
+                    y = attach_y - abs(dy)
+            elif direction == "left" or direction == "right":
+                if new_shape_name == "O shape" or new_shape_name == "Large Square" or new_shape_name == "Small U-shape" or new_shape_name == "Large Plus":
+                    x = attach_x + dx
+                    y = attach_y - abs(dy) + 1
+                elif new_shape_name == "Large S-shape" or new_shape_name == "SnakeLeft":
+                    x = attach_x + dx
+                    y = attach_y - abs(dy) + 2
+                else:
+                    x = attach_x + dx
+                    y = attach_y - abs(dy)
+            elif direction == "down":
+                if new_shape_name == "O shape" or new_shape_name == "Large Square" or new_shape_name == "Large Plus":
+                    x = attach_x + dx - 1
+                    y = attach_y - abs(dy) + 2
+                elif new_shape_name ==  "Long Line":
+                    x = attach_x + dx
+                    y = attach_y - abs(dy) + 4
+
+                elif new_shape_name == "SnakeLeft" or new_shape_name == "SnakeRight":
+                    x = attach_x + dx
+                    y = attach_y - abs(dy) + 3
+                elif new_shape_name == "Small Line" or new_shape_name == "Large S-shape" or new_shape_name == "Large Z-shape" or new_shape_name == "J-shape":
+                    x = attach_x + dx 
+                    y = attach_y - abs(dy) + 2
+                else:
+                    x = attach_x + dx 
+                    y = attach_y - abs(dy)
+
+            if 0 <= x < cols and 0 <= y < rows:
+                grid[y][x] = 1
+    else:
+        print("Shape placement failed due to collision or being out of bounds.")
 
     return grid
+
 
 # Define the color for the grid cells
 grid_color = (255, 255, 255)  # White
@@ -116,7 +214,7 @@ while running:
                 dot_position = new_position
             elif direction:
                 # Generate a random field in the direction of the attempted move
-                grid = random_field(grid, direction, dot_position)
+                grid = random_field(grid, direction, new_position)  # Pass the new position
 
     # Fill the screen with a black background
     screen.fill((0, 0, 0))
