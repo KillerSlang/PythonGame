@@ -64,19 +64,20 @@ def random_field(grid, direction, dot_position):
         "SnakeRight": [(0, 0), (0, 1), (1, 1), (1, 2), (2, 2), (2, 3)]
     }
 
+    blockade_shapes = {
+        "Block Long Line": [(0, 0), (0, 1), (0, 2)],
+        "Block Line": [(0, 0), (0, 1)],
+        "Block Dot": [(0, 0)],
+        "Block LeftCorner": [(0, 0), (0, 1), (1, 0)],
+        "Block RightCorner": [(0, 0), (0, 1), (1, 1)]
+    }
+
     # Select a random shape that is different from the last one
     new_shape_name, new_shape_coords = random.choice(list(shapes.items()))
     while new_shape_coords == last_shape:
         new_shape_name, new_shape_coords = random.choice(list(shapes.items()))
 
     last_shape = new_shape_coords
-
-    # You can now use new_shape_name and new_shape_coords as needed
-
-    # Print the shape to the console
-    print("Shape to be placed:" + new_shape_name)
-    for dx, dy in new_shape_coords:
-        print(f"({dx}, {dy})")
 
     # Rotate shape based on direction
     if direction == "left":
@@ -90,11 +91,6 @@ def random_field(grid, direction, dot_position):
     else:
         shape = new_shape_coords  # No rotation if direction is not specified
 
-    # Print the rotated shape to the console
-    print("Rotated shape:")
-    for dx, dy in shape:
-        print(f"({dx}, {dy})")
-
     # Adjust shape position to ensure it connects to the desired position
     attach_x, attach_y = dot_position  # Use the desired position as the reference
 
@@ -104,6 +100,9 @@ def random_field(grid, direction, dot_position):
     non_colliding_positions = []
 
     for dx, dy in shape:
+        #enemyBox = random.randint(0, 20)
+        #if enemyBox == 20:
+
         if direction == "up":
             if new_shape_name in ["O shape", "Large Square", "Small U-shape", "Large Plus"]:
                 x = attach_x + dx - 1
@@ -154,13 +153,25 @@ def random_field(grid, direction, dot_position):
             non_colliding_positions.append((x, y))  # Store valid positions
 
     if not can_place:
-        print(f"Error: Shape cannot be placed at ({attach_x}, {attach_y}) due to collision or out-of-bounds.")
+        print(f"Error: {new_shape_name} cannot be placed at ({attach_x}, {attach_y}) due to collision or out-of-bounds.")
         print("Colliding positions:", colliding_positions)
         print("Valid positions:", non_colliding_positions)
-    
-    for x, y in non_colliding_positions:
-        if 0 <= x < cols and 0 <= y < rows:
-            grid[y][x] = 2  # Mark non-colliding positions in the grid
+        
+        # If the shape can't be placed, replace it with a blockade shape
+        if new_shape_name in ["Large Square", "Small U-shape", "O shape"]:
+            print(f"Shape {new_shape_name} is replaced with Block Long Line.")
+            new_shape_name = "Block Long Line"  # Replace shape with Block Long Line
+            shape = blockade_shapes[new_shape_name]  # Get Block Long Line shape
+        
+        # Now process the positions using the updated blockade shape
+        for dx, dy in shape:
+            x = attach_x + dx
+            y = attach_y + dy
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1:
+                grid[y][x] = 2
+            elif 0 <= x < cols and 0 <= y < rows:
+                grid[y][x] = 1
+
 
     if can_place:
         # Place the shape onto the grid
@@ -208,13 +219,12 @@ def random_field(grid, direction, dot_position):
                     x = attach_x + dx 
                     y = attach_y - abs(dy)
 
-            if 0 <= x < cols and 0 <= y < rows:
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 2:
                 grid[y][x] = 1
     else:
         print("Shape placement failed due to collision or being out of bounds.")
 
     return grid
-
 
 # Define the color for the grid cells
 grid_color = (255, 255, 255)  # White
