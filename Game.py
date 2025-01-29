@@ -100,18 +100,67 @@ def random_field(grid, direction, dot_position):
 
     # Check if the shape can be placed without overlapping existing boxes
     can_place = True
+    colliding_positions = []
+    non_colliding_positions = []
+
     for dx, dy in shape:
         if direction == "up":
-            x = attach_x + dx
-            y = attach_y + dy  # Keep dy consistent with the shape's natural orientation
+            if new_shape_name in ["O shape", "Large Square", "Small U-shape", "Large Plus"]:
+                x = attach_x + dx - 1
+                y = attach_y - abs(dy)
+            elif new_shape_name in ["Large S-shape", "SnakeLeft"]:
+                x = attach_x + dx - 2
+                y = attach_y - abs(dy)
+            else:
+                x = attach_x + dx
+                y = attach_y - abs(dy)
+        elif direction in ["left", "right"]:
+            if new_shape_name in ["O shape", "Large Square", "Small U-shape", "Large Plus"]:
+                x = attach_x + dx
+                y = attach_y - abs(dy) + 1
+            elif new_shape_name in ["Large S-shape", "SnakeLeft"]:
+                x = attach_x + dx
+                y = attach_y - abs(dy) + 2
+            else:
+                x = attach_x + dx
+                y = attach_y - abs(dy)
+        elif direction == "down":
+            if new_shape_name in ["O shape", "Large Square", "Large Plus"]:
+                x = attach_x + dx - 1
+                y = attach_y - abs(dy) + 2
+            elif new_shape_name == "Long Line":
+                x = attach_x + dx
+                y = attach_y - abs(dy) + 4
+            elif new_shape_name in ["SnakeLeft", "SnakeRight"]:
+                x = attach_x + dx - 2
+                y = attach_y - abs(dy) + 3
+            elif new_shape_name in ["Small Line", "Large S-shape", "Large Z-shape", "J-shape"]:
+                x = attach_x + dx
+                y = attach_y - abs(dy) + 2
+            elif new_shape_name == "Small U-shape":
+                x = attach_x + dx
+                y = attach_y - abs(dy) + 1
+            else:
+                x = attach_x + dx
+                y = attach_y - abs(dy)
         else:
             x = attach_x + dx
-            y = attach_y + dy
-
+            y = attach_y + dy  # Default behavior for other cases
+        
         if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1:
             can_place = False
-            print(f"Error: Shape cannot be placed at ({attach_x}, {attach_y}) due to collision or out-of-bounds.")
-            break
+            colliding_positions.append((x, y))  # Store colliding positions
+        else:
+            non_colliding_positions.append((x, y))  # Store valid positions
+
+    if not can_place:
+        print(f"Error: Shape cannot be placed at ({attach_x}, {attach_y}) due to collision or out-of-bounds.")
+        print("Colliding positions:", colliding_positions)
+        print("Valid positions:", non_colliding_positions)
+    
+    for x, y in non_colliding_positions:
+        if 0 <= x < cols and 0 <= y < rows:
+            grid[y][x] = 2  # Mark non-colliding positions in the grid
 
     if can_place:
         # Place the shape onto the grid
@@ -143,13 +192,18 @@ def random_field(grid, direction, dot_position):
                 elif new_shape_name ==  "Long Line":
                     x = attach_x + dx
                     y = attach_y - abs(dy) + 4
-
-                elif new_shape_name == "SnakeLeft" or new_shape_name == "SnakeRight":
+                elif new_shape_name == "SnakeRight":
+                    x = attach_x + dx -2
+                    y = attach_y - abs(dy) + 3
+                elif new_shape_name == "SnakeLeft":
                     x = attach_x + dx
                     y = attach_y - abs(dy) + 3
                 elif new_shape_name == "Small Line" or new_shape_name == "Large S-shape" or new_shape_name == "Large Z-shape" or new_shape_name == "J-shape":
                     x = attach_x + dx 
                     y = attach_y - abs(dy) + 2
+                elif new_shape_name == "Small U-shape":
+                    x = attach_x + dx
+                    y = attach_y - abs(dy) + 1
                 else:
                     x = attach_x + dx 
                     y = attach_y - abs(dy)
@@ -170,6 +224,8 @@ def draw_grid(grid):
         for x in range(cols):
             if grid[y][x] == 1:
                 pygame.draw.rect(screen, grid_color, (x * box_size, y * box_size, box_size, box_size), 1)
+            elif grid[y][x] == 2:
+                pygame.draw.rect(screen, (255, 0, 0), (x * box_size, y * box_size, box_size, box_size))  # Red for non-colliding positions
 
 # Define the initial position of the red dot
 dot_position = [cols // 2, rows - 2]
