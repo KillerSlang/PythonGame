@@ -21,6 +21,8 @@ box_size = 25
 cols = 1200 // box_size
 rows = 700 // box_size
 
+enemycounter = 0
+
 def run_battle(character_name):
     subprocess.run(["python", "EnemyEncounter.py", character_name])
 
@@ -253,6 +255,8 @@ def can_move_to(position, grid):
     if 0 <= x < cols and 0 <= y < rows:
         if grid[y][x] == "Enemy":
             print("Enemy Detected!")
+            global enemycounter
+            enemycounter += 1
             run_battle(character_name)
             return grid[y][x] == "Enemy"
         else:
