@@ -1,7 +1,6 @@
 import pygame
 import sys
 import random
-import time
 import subprocess
 
 # Initialize Pygame
@@ -21,6 +20,9 @@ pygame.display.set_caption(f"World Map, Character selected: - {character_name}")
 box_size = 25
 cols = 1200 // box_size
 rows = 700 // box_size
+
+def run_battle(character_name):
+    subprocess.run(["python", "EnemyEncounter.py", character_name])
 
 def starting_grid():
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
@@ -91,7 +93,6 @@ def random_field(grid, direction, dot_position):
     else:
         shape = new_shape_coords  # No rotation if direction is not specified
 
-    # Adjust shape position to ensure it connects to the desired position
     attach_x, attach_y = dot_position  # Use the desired position as the reference
 
     # Check if the shape can be placed without overlapping existing boxes
@@ -100,9 +101,6 @@ def random_field(grid, direction, dot_position):
     non_colliding_positions = []
 
     for dx, dy in shape:
-        #enemyBox = random.randint(0, 20)
-        #if enemyBox == 20:
-
         if direction == "up":
             if new_shape_name in ["O shape", "Large Square", "Small U-shape", "Large Plus"]:
                 x = attach_x + dx - 1
@@ -146,7 +144,7 @@ def random_field(grid, direction, dot_position):
             x = attach_x + dx
             y = attach_y + dy  # Default behavior for other cases
         
-        if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1:
+        if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1 or grid[y][x] == "Enemy":
             can_place = False
             colliding_positions.append((x, y))  # Store colliding positions
         else:
@@ -167,9 +165,9 @@ def random_field(grid, direction, dot_position):
         for dx, dy in shape:
             x = attach_x + dx
             y = attach_y + dy
-            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1:
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] == "Enemy":
                 grid[y][x] = 2
-            elif 0 <= x < cols and 0 <= y < rows:
+            elif 0 <= x < cols and 0 <= y < rows and grid[y][x] != "Enemy":
                 grid[y][x] = 1
 
 
@@ -220,7 +218,11 @@ def random_field(grid, direction, dot_position):
                     y = attach_y - abs(dy)
 
             if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 2:
-                grid[y][x] = 1
+                enemyBox = random.randint(0, 20)  # 1 in 20 chance of being an enemy
+                if enemyBox == 20:
+                    grid[y][x] = "Enemy"
+                else:
+                    grid[y][x] = 1
     else:
         print("Shape placement failed due to collision or being out of bounds.")
 
@@ -232,7 +234,7 @@ grid_color = (255, 255, 255)  # White
 def draw_grid(grid):
     for y in range(rows):
         for x in range(cols):
-            if grid[y][x] == 1:
+            if grid[y][x] == 1 or grid[y][x] == "Enemy":
                 pygame.draw.rect(screen, grid_color, (x * box_size, y * box_size, box_size, box_size), 1)
             elif grid[y][x] == 2:
                 pygame.draw.rect(screen, (255, 0, 0), (x * box_size, y * box_size, box_size, box_size))  # Red for non-colliding positions
@@ -249,7 +251,12 @@ def draw_dot(position):
 def can_move_to(position, grid):
     x, y = position
     if 0 <= x < cols and 0 <= y < rows:
-        return grid[y][x] == 1
+        if grid[y][x] == "Enemy":
+            print("Enemy Detected!")
+            run_battle(character_name)
+            return grid[y][x] == "Enemy"
+        else:
+            return grid[y][x] == 1
     return False
 
 # Main game loop
