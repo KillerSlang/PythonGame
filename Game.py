@@ -3,6 +3,10 @@ import sys
 import random
 import subprocess
 
+# Concepts: 
+# Herlaad de game als een bepaalde cel is bereikt, met de pop-up to clear the map.
+# Als de speler op een cell met enemy komt, maak de cell een andere kleur zodat hij nog een keer triggert6
+
 # Initialize Pygame
 pygame.init()
 
@@ -23,8 +27,8 @@ rows = 700 // box_size
 
 enemycounter = 0
 
-def run_battle(character_name):
-    subprocess.run(["python", "EnemyEncounter.py", character_name])
+def run_battle(character_name, enemycounter):
+    subprocess.run(["python", "EnemyEncounter.py", character_name, str(enemycounter)])
 
 def starting_grid():
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
@@ -162,12 +166,20 @@ def random_field(grid, direction, dot_position):
             print(f"Shape {new_shape_name} is replaced with Block Long Line.")
             new_shape_name = "Block Long Line"  # Replace shape with Block Long Line
             shape = blockade_shapes[new_shape_name]  # Get Block Long Line shape
+        elif new_shape_name in ["Long Line"]:
+            print(f"Shape {new_shape_name} is replaced with Block Line.")
+            new_shape_name = "Block Line"  # Replace shape with Block Line
+            shape = blockade_shapes[new_shape_name]  # Get Block Line shape
+        elif new_shape_name in ["Small Line", "Large S-shape", "Large Z-shape", "J-shape", "SnakeLeft", "SnakeRight", "Large Plus"]:
+            print(f"Shape {new_shape_name} is replaced with Block Dot.")
+            new_shape_name = "Block Dot"
+            shape = blockade_shapes[new_shape_name]
         
         # Now process the positions using the updated blockade shape
         for dx, dy in shape:
             x = attach_x + dx
             y = attach_y + dy
-            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] == "Enemy":
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] != "Enemy":
                 grid[y][x] = 2
             elif 0 <= x < cols and 0 <= y < rows and grid[y][x] != "Enemy":
                 grid[y][x] = 1
@@ -257,7 +269,7 @@ def can_move_to(position, grid):
             print("Enemy Detected!")
             global enemycounter
             enemycounter += 1
-            run_battle(character_name)
+            run_battle(character_name, enemycounter)
             return grid[y][x] == "Enemy"
         else:
             return grid[y][x] == 1
