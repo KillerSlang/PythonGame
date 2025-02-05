@@ -5,7 +5,8 @@ import subprocess
 
 # Concepts: 
 # Herlaad de game als een bepaalde cel is bereikt, met de pop-up to clear the map.
-# Als de speler op een cell met enemy komt, maak de cell een andere kleur zodat hij nog een keer triggert6
+# Als de speler op een cell met enemy komt, maak de cell een andere kleur zodat hij nog een keer triggert
+# Remove the enemy from the cell after the battle is done and player did not run away
 
 # Initialize Pygame
 pygame.init()
@@ -75,9 +76,7 @@ def random_field(grid, direction, dot_position):
     blockade_shapes = {
         "Block Long Line": [(0, 0), (0, 1), (0, 2)],
         "Block Line": [(0, 0), (0, 1)],
-        "Block Dot": [(0, 0)],
-        "Block LeftCorner": [(0, 0), (0, 1), (1, 0)],
-        "Block RightCorner": [(0, 0), (0, 1), (1, 1)]
+        "Block Dot": [(0, 0)]
     }
 
     # Select a random shape that is different from the last one
@@ -170,7 +169,7 @@ def random_field(grid, direction, dot_position):
             print(f"Shape {new_shape_name} is replaced with Block Line.")
             new_shape_name = "Block Line"  # Replace shape with Block Line
             shape = blockade_shapes[new_shape_name]  # Get Block Line shape
-        elif new_shape_name in ["Small Line", "Large S-shape", "Large Z-shape", "J-shape", "SnakeLeft", "SnakeRight", "Large Plus"]:
+        elif new_shape_name in ["Small Line", "Large T-shape", "Large S-shape", "Large Z-shape", "J-shape", "SnakeLeft", "SnakeRight", "Large Plus"]:
             print(f"Shape {new_shape_name} is replaced with Block Dot.")
             new_shape_name = "Block Dot"
             shape = blockade_shapes[new_shape_name]
