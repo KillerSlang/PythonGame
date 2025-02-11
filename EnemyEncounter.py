@@ -124,6 +124,10 @@ attack_stats = {
     "Attack 4": {"damage": 25, "accuracy": 75}
 }
 
+attack_enemy_list = ["Tackle", "Scratch", "Block", "Recovery"]
+
+last_enemy_attack = None
+
 def make_character(character_name):
     return {"health": character_stats[character_name]["health"], "attack": character_stats[character_name]["attack"], "defense": character_stats[character_name]["defense"]}
 
@@ -148,10 +152,20 @@ def attack(attack_name, stats):
     player_action()
     if hitOrMiss <= stats["accuracy"]:
         print("You hit!")
-        enemy["health"] -= stats["damage"]
-        print(f"Enemy health: {enemy['health']}")
-        slash_animation()
-        shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)  # Shake the image when hit
+        print("last attack: ", f"{last_enemy_attack}")
+        if last_enemy_attack == "Block":
+            stats["damage"] = stats["damage"] // 2
+            enemy["health"] -= stats["damage"]
+            print(f"Enemy health: {enemy['health']}")
+            slash_animation()
+            shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+            stats["damage"] = stats["damage"] * 2
+        else:
+            enemy["health"] -= stats["damage"]
+            print(f"Enemy health: {enemy['health']}")
+            slash_animation()
+            shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+        
         if enemy["health"] <= 0:
             print("You won!")
             pygame.quit()
@@ -164,18 +178,70 @@ def attack(attack_name, stats):
         enemy_attack()
 
 def enemy_attack():
+    global last_enemy_attack
+    Start_time = time.time()
+    while time.time() - Start_time < 0.5:
+        pass
     hitOrMiss = random.randint(1, 100)
-    if hitOrMiss <= enemy["accuracy"]:
-        print("Enemy hit!")
-        print(f"Enemy dealt {enemy['damage']} damage!")
-        character["health"] -= enemy["damage"]
-        print(f"Character health: {character['health']}")
-        if character["health"] <= 0:
-            print("You lost!")
-            pygame.quit()
-            sys.exit()
-    else:
-        print("Enemy missed!")
+    attack_enemy = random.choice(attack_enemy_list)
+    print(f"Enemy used {attack_enemy}!")
+    enemy_action(attack_enemy)
+    if attack_enemy == "Tackle" or attack_enemy == "Scratch":
+        last_enemy_attack = attack_enemy
+        if hitOrMiss <= enemy["accuracy"]:
+            print("Enemy hit!")
+            print(f"Enemy dealt {enemy['damage']} damage!")
+            character["health"] -= enemy["damage"]
+            print(f"Character health: {character['health']}")
+            if character["health"] <= 0:
+                print("You lost!")
+                pygame.quit()
+                sys.exit()
+        else:
+            enemy_miss()
+            print("Enemy missed!")
+    elif attack_enemy == "Block":
+        last_enemy_attack = attack_enemy
+        print("Enemy blocked!")
+        enemy_action(attack_enemy)
+    elif attack_enemy == "Recovery":
+        last_enemy_attack = attack_enemy
+        print("Enemy recovered health!")
+        enemy["health"] += 10
+        print(f"Enemy health: {enemy['health']}")
+        enemy_action(attack_enemy)
+
+def enemy_action(attack_enemy_name):
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)
+    if attack_enemy_name != "Recovery":
+        text_surface = font.render(f"Enemy used {attack_enemy_name}!", True, (255, 255, 255))
+    elif attack_enemy_name == "Recovery":
+        text_surface = font.render(f"Enemy used {attack_enemy_name} and has recovered 10 health!", True, (255, 255, 255))
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
 
 # Function to handle escape attempt
 def escape():
@@ -244,7 +310,6 @@ def player_action():
     screen.fill((0, 0, 0))
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
-
 
 def shake_image(image, x, y, screen, character, attack, duration=500):
     """
@@ -315,6 +380,35 @@ def player_miss():
     pygame.font.init()
     font = pygame.font.SysFont('Arial', 30)  # Choose font and size
     text_surface = font.render(f"{character_name}'s attack missed....", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+def enemy_miss():
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"Enemy's attack missed", True, (255, 255, 255))  # Render text
 
     start_time = time.time()
 
