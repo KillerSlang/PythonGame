@@ -3,6 +3,7 @@ import sys
 import random
 import tkinter as tk
 from tkinter import messagebox
+import time
 
 pygame.init()
 
@@ -33,6 +34,9 @@ def enemy_damage(enemycounter):
         damage = 5
     elif damage > 40:
         damage = 40
+    halfDamage = damage / 2
+    damage = random.randint(int(halfDamage), int(damage))
+
     return damage
 
 def make_enemy():
@@ -47,6 +51,24 @@ button_width, button_height = 460, 80
 button_margin = 20
 button_color, button_text_color = (0, 128, 255), (255, 255, 255)
 font = pygame.font.Font(None, 36)
+
+# Load enemy image
+enemy_image = pygame.image.load("Images/hive_thrall.webp")
+
+# Load slash image
+slash_image = pygame.image.load("Images/Slash.png")
+
+# Set desired width and height for the enemy image
+enemy_width, enemy_height = 1200, 500
+
+# Scale the enemy image to the desired size
+enemy_image = pygame.transform.scale(enemy_image, (enemy_width, enemy_height))
+
+enemy_rect = enemy_image.get_rect()
+
+# Calculate position to center the image above the buttons
+enemy_x = (screen.get_width() - enemy_rect.width) // 2
+enemy_y = screen.get_height() - (2 * button_height + button_margin) - enemy_rect.height - 20
 
 # Button list
 buttonsList = []
@@ -123,10 +145,13 @@ enemy = make_enemy()
 def attack(attack_name, stats):
     print(f"{character_name} used {attack_name}! Damage: {stats['damage']}, Accuracy: {stats['accuracy']}%")
     hitOrMiss = random.randint(1, 100)
+    player_action()
     if hitOrMiss <= stats["accuracy"]:
         print("You hit!")
         enemy["health"] -= stats["damage"]
         print(f"Enemy health: {enemy['health']}")
+        slash_animation()
+        shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)  # Shake the image when hit
         if enemy["health"] <= 0:
             print("You won!")
             pygame.quit()
@@ -160,6 +185,122 @@ def escape():
     else:
         print("You failed to escape!")
 
+def slash_animation():
+    start_time = time.time()
+    image_width = slash_image.get_width()
+    image_height = slash_image.get_height()
+
+    # Initially the image is completely hidden
+    visible_width = 0  # Initially 0 width to hide the image
+
+    # Animate the slash appearing from right to left
+    while time.time() - start_time < 0.5:  # 0.5 seconds for the reveal
+
+        # Increase the visible width to reveal the image from right to left
+        visible_width = int(image_width * (time.time() - start_time) / 0.5)
+
+        # Draw only the visible portion of the slash image (reveal from right to left)
+        visible_image = slash_image.subsurface(0, 0, visible_width, image_height)
+        screen.blit(visible_image, (enemy_x, enemy_y))
+
+        pygame.display.flip()
+        pygame.time.delay(10)  # Adding a small delay for smoother animation
+
+    # Hold the image fully visible for a short time (optional)
+    pygame.time.delay(300)  # Pause for 0.3 seconds before disappearing
+
+# Function to tell the player their action
+def player_action():
+    """
+    Display an action message in a black box with a white border.
+    
+    :param action_text: The text to display inside the box.
+    """
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name} used {attack_name}!", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+
+def shake_image(image, x, y, screen, character, attack, duration=500):
+    """
+    Shake the image horizontally to indicate it has been hit.
+
+    :param image: The image to shake.
+    :param x: The x-coordinate where the image is drawn.
+    :param y: The y-coordinate where the image is drawn.
+    :param screen: The screen to draw the image on.
+    :param character: The character whose intensity will be used.
+    :param attack: The type of attack made.
+    :param duration: The duration of the shake in milliseconds.
+    """
+    # Define intensity based on character and attack
+    intensity_map = {
+        'Swordman': {'Slash': 10, 'Strike': 15, 'Charge': 20, 'Block': 0},
+        'Warlock': {'Fireball': 15, 'Shadow Bolt': 20, 'Drain Life': 10, 'Cloak': 0},
+        'Gunner': {'Shoot': 15, 'Stab': 10, 'Grenade': 20, 'Dodge': 0}
+    }
+    intensity = intensity_map.get(character, {}).get(attack, 10)  # Default intensity is 10
+
+    original_x = x  # Store original x position
+    elapsed_time = 0
+    clock = pygame.time.Clock()
+
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = x + (image.get_width() // 2) - (box_width // 2)
+    box_y = y + (image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"Enemy took {stats['damage']} damage!", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while elapsed_time < duration:
+        offset_x = random.randint(-intensity, intensity)  # Horizontal shake
+
+        # Redraw enemy image in new position (shaken)
+        screen.blit(image, (original_x + offset_x, y))
+
+        # Show the black box with a white border
+        if time.time() - start_time < 5.0:  # Show for 1.0 seconds (extended from 0.5 seconds)
+            pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+            pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+            # Blit the text onto the screen
+            text_x = box_x + (box_width - text_surface.get_width()) // 2
+            text_y = box_y + (box_height - text_surface.get_height()) // 2
+            screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+        elapsed_time += clock.tick(60)  # Update elapsed time
+
+    # Clear the box after duration
+    screen.fill((0, 0, 0))
+    screen.blit(image, (original_x, y))
+    pygame.display.flip()
+
+
 show_stats = False
 running = True
 
@@ -182,6 +323,10 @@ while running:
                     attack(attack_name, stats)
 
     screen.fill((0, 0, 0))
+    
+    # Draw centered image above the buttons
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+
     attacks_with_stats = chosen_attacks()
 
     # Draw attack buttons
