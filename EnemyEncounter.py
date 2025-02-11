@@ -160,6 +160,7 @@ def attack(attack_name, stats):
             enemy_attack()
     else:
         print("You missed!")
+        player_miss()
         enemy_attack()
 
 def enemy_attack():
@@ -240,6 +241,10 @@ def player_action():
 
         pygame.display.flip()
 
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
 
 def shake_image(image, x, y, screen, character, attack, duration=500):
     """
@@ -300,6 +305,34 @@ def shake_image(image, x, y, screen, character, attack, duration=500):
     screen.blit(image, (original_x, y))
     pygame.display.flip()
 
+def player_miss():
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name}'s attack missed....", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
 
 show_stats = False
 running = True
