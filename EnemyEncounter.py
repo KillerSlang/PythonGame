@@ -7,6 +7,9 @@ import time
 
 pygame.init()
 
+# Healthbars
+# Return value of win or run away from battle to main game
+
 # Get character name from command line arguments
 character_name = sys.argv[1] if len(sys.argv) > 1 else "Unknown"
 
@@ -128,6 +131,8 @@ attack_enemy_list = ["Tackle", "Scratch", "Block", "Recovery"]
 
 last_enemy_attack = None
 
+last_player_attack = None
+
 def make_character(character_name):
     return {"health": character_stats[character_name]["health"], "attack": character_stats[character_name]["attack"], "defense": character_stats[character_name]["defense"]}
 
@@ -147,34 +152,64 @@ character = make_character(character_name)
 enemy = make_enemy()
 # Function to handle attack selection
 def attack(attack_name, stats):
+    global last_player_attack
     print(f"{character_name} used {attack_name}! Damage: {stats['damage']}, Accuracy: {stats['accuracy']}%")
     hitOrMiss = random.randint(1, 100)
     player_action()
-    if hitOrMiss <= stats["accuracy"]:
-        print("You hit!")
-        print("last attack: ", f"{last_enemy_attack}")
-        if last_enemy_attack == "Block":
-            stats["damage"] = stats["damage"] // 2
-            enemy["health"] -= stats["damage"]
-            print(f"Enemy health: {enemy['health']}")
-            slash_animation()
-            shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-            stats["damage"] = stats["damage"] * 2
+    if attack_name != "Block" or attack_name != "Dodge" or attack_name != "Cloak":
+        if hitOrMiss <= stats["accuracy"]:
+            print("You hit!")
+            print("last attack: ", f"{last_enemy_attack}")
+            if attack_name == "Drain Life": # Not fully functional
+                character["health"] += 10
+                print(f"Character health: {character['health']}")
+                if last_enemy_attack == "Block":
+                    print("Block detected while Drain Life")
+                    stats["damage"] = stats["damage"] // 2
+                    enemy["health"] -= stats["damage"]
+                    print(f"Enemy health: {enemy['health']}")
+                    slash_animation()
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+                    stats["damage"] = stats["damage"] * 2
+                else:
+                    enemy["health"] -= stats["damage"]
+                    print(f"Enemy health: {enemy['health']}")
+                    slash_animation()
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+            else:
+                if last_enemy_attack == "Block":
+                    print("Block detected")
+                    stats["damage"] = stats["damage"] // 2
+                    enemy["health"] -= stats["damage"]
+                    print(f"Enemy health: {enemy['health']}")
+                    slash_animation()
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+                    stats["damage"] = stats["damage"] * 2
+                else:
+                    enemy["health"] -= stats["damage"]
+                    print(f"Enemy health: {enemy['health']}")
+                    slash_animation()
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+            
+            if enemy["health"] <= 0:
+                print("Win condition met")
+                game_won()
+                sys.stdout.flush()
+                time.sleep(1)
+                result = "Win"
+                print(result)
+                sys.stdout.flush()
+                pygame.quit()
+                sys.exit()
+            else :
+                enemy_attack()
         else:
-            enemy["health"] -= stats["damage"]
-            print(f"Enemy health: {enemy['health']}")
-            slash_animation()
-            shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-        
-        if enemy["health"] <= 0:
-            print("You won!")
-            pygame.quit()
-            sys.exit()
-        else :
+            print("You missed!")
+            player_miss()
             enemy_attack()
-    else:
-        print("You missed!")
-        player_miss()
+    elif attack_name == "Block" or attack_name == "Dodge" or attack_name == "Cloak":
+        last_player_attack = attack_name
+        print("You blocked!")
         enemy_attack()
 
 def enemy_attack():
@@ -190,8 +225,14 @@ def enemy_attack():
         last_enemy_attack = attack_enemy
         if hitOrMiss <= enemy["accuracy"]:
             print("Enemy hit!")
-            print(f"Enemy dealt {enemy['damage']} damage!")
-            character["health"] -= enemy["damage"]
+            red_screen_overlay(screen)
+            if last_player_attack == "Block":
+                enemy["damage"] = enemy["damage"] // 2
+                print(f"Enemy dealt {enemy['damage']} damage!")
+                character["health"] -= enemy["damage"]
+            else:
+                print(f"Enemy dealt {enemy['damage']} damage!")
+                character["health"] -= enemy["damage"]
             print(f"Character health: {character['health']}")
             if character["health"] <= 0:
                 print("You lost!")
@@ -275,6 +316,21 @@ def slash_animation():
 
     # Hold the image fully visible for a short time (optional)
     pygame.time.delay(300)  # Pause for 0.3 seconds before disappearing
+
+def red_screen_overlay(screen, alpha=20):
+    """
+    Creates a semi-transparent red overlay on the entire screen.
+    
+    :param screen: The pygame display surface.
+    :param alpha: The transparency level (0 = fully transparent, 255 = fully opaque).
+    """
+    start_time = time.time()
+    while time.time() - start_time < 0.5:
+        red_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)  # Create transparent surface
+        red_overlay.fill((255, 0, 0, alpha))  # Fill with red (RGBA format)
+        screen.blit(red_overlay, (0, 0))  # Draw overlay onto the screen
+        pygame.display.flip()  # Update display
+
 
 # Function to tell the player their action
 def player_action():
@@ -421,6 +477,57 @@ def enemy_miss():
         text_x = box_x + (box_width - text_surface.get_width()) // 2
         text_y = box_y + (box_height - text_surface.get_height()) // 2
         screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+def game_won():
+    """
+    Display an action message in a black box with a white border.
+    
+    :param action_text: The text to display inside the box.
+    """
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render("Enemy has been slain, you have won!!", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 1.0:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_wait = font.render("Please wait....", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 1.0:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_wait.get_width()) // 2
+        text_y = box_y + (box_height - text_wait.get_height()) // 2
+        screen.blit(text_wait, (text_x, text_y))
 
         pygame.display.flip()
 

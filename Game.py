@@ -29,7 +29,26 @@ rows = 700 // box_size
 enemycounter = 0
 
 def run_battle(character_name, enemycounter):
-    subprocess.run(["python", "EnemyEncounter.py", character_name, str(enemycounter)])
+    # Construct the command with arguments
+    command = ["python", "EnemyEncounter.py", character_name, str(enemycounter)]
+    
+    # Start the subprocess with Popen
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    
+    # Read output and error as they are generated
+    while True:
+        output = process.stdout.readline()
+        if output == "" and process.poll() is not None:
+            break
+        if output:
+            print(f"File 1: Received -> {output.strip()}")
+            if output.strip() == "Win":
+                print(f"File 1: Received Final message -> Game won!")
+    
+    # Capture any errors
+    stderr_output = process.stderr.read().strip()
+    if stderr_output:
+        print(f"File 1: Error -> {stderr_output}")
 
 def starting_grid():
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
