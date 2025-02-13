@@ -8,7 +8,6 @@ import time
 pygame.init()
 
 # Healthbars
-# Return value of win or run away from battle to main game
 
 # Get character name from command line arguments
 character_name = sys.argv[1] if len(sys.argv) > 1 else "Unknown"
@@ -17,10 +16,11 @@ character_name = sys.argv[1] if len(sys.argv) > 1 else "Unknown"
 enemycounter = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 print(f"Enemy counter: {enemycounter}")
 
-# Function to calculate enemy health
+# Function to calculate enemy health depending on enemy counter
 def enemy_health(enemycounter):
     return 100 * enemycounter
 
+# Function to calculate enemy accuracy depending on enemy counter
 def enemy_accuracy(enemycounter):
     accuracy = 10 * enemycounter
     if 80 < accuracy < 150:
@@ -31,6 +31,7 @@ def enemy_accuracy(enemycounter):
         accuracy = 90
     return accuracy
 
+# Function to calculate enemy damage depending on enemy counter
 def enemy_damage(enemycounter):
     damage = 10 * (enemycounter / 2)
     if damage < 5:
@@ -42,6 +43,7 @@ def enemy_damage(enemycounter):
 
     return damage
 
+# Function to make enemy
 def make_enemy():
     return {"health": enemy_health(enemycounter), "damage": enemy_damage(enemycounter), "accuracy": enemy_accuracy(enemycounter)}
 
@@ -133,6 +135,7 @@ last_enemy_attack = None
 
 last_player_attack = None
 
+# Function to make character
 def make_character(character_name):
     return {"health": character_stats[character_name]["health"], "attack": character_stats[character_name]["attack"], "defense": character_stats[character_name]["defense"]}
 
@@ -214,6 +217,7 @@ def attack(attack_name, stats):
         print("You blocked!")
         enemy_attack()
 
+# Function to handle enemy attack
 def enemy_attack():
     global last_enemy_attack
     Start_time = time.time()
@@ -254,6 +258,7 @@ def enemy_attack():
         print(f"Enemy health: {enemy['health']}")
         enemy_action(attack_enemy)
 
+# function to tell the player what the enemy does
 def enemy_action(attack_enemy_name):
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
@@ -327,7 +332,7 @@ def slash_animation():
 
     # Hold the image fully visible for a short time (optional)
     pygame.time.delay(300)  # Pause for 0.3 seconds before disappearing
-
+# Function to show the player they got hit
 def red_screen_overlay(screen, alpha=20):
     """
     Creates a semi-transparent red overlay on the entire screen.
@@ -341,7 +346,6 @@ def red_screen_overlay(screen, alpha=20):
         red_overlay.fill((255, 0, 0, alpha))  # Fill with red (RGBA format)
         screen.blit(red_overlay, (0, 0))  # Draw overlay onto the screen
         pygame.display.flip()  # Update display
-
 
 # Function to tell the player their action
 def player_action():
@@ -378,6 +382,7 @@ def player_action():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to shake the enemy to show hit
 def shake_image(image, x, y, screen, character, attack, duration=500):
     """
     Shake the image horizontally to indicate it has been hit.
@@ -437,6 +442,7 @@ def shake_image(image, x, y, screen, character, attack, duration=500):
     screen.blit(image, (original_x, y))
     pygame.display.flip()
 
+# Function to tell the player they missed
 def player_miss():
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
@@ -466,6 +472,7 @@ def player_miss():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to tell the player the enemy missed
 def enemy_miss():
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
@@ -495,6 +502,7 @@ def enemy_miss():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to show the player they won
 def game_won():
     """
     Display an action message in a black box with a white border.
@@ -546,6 +554,7 @@ def game_won():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to show the player they tried to escape
 def escape_attempt():
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
@@ -575,6 +584,7 @@ def escape_attempt():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to show the player they failed to escape
 def escape_failed():
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
@@ -604,6 +614,7 @@ def escape_failed():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to show the player they successfully escaped
 def escape_success():
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
