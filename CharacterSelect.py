@@ -27,13 +27,16 @@ character_stats = {
     "Warlock": "Health: 80\nAttack: 70\nDefense: 20"
 }
 
+# Function to show a pop-up with the character stats
 def show_character_dialog(character_name):
+    # Function to launch main game
     def on_select():
         root.destroy()
         pygame.quit()
         subprocess.run(["python", "Game.py", character_name])
         sys.exit()
 
+    # Function to close the pop-up
     def on_back():
         root.destroy()
 
@@ -70,6 +73,7 @@ def show_character_dialog(character_name):
     dialog.deiconify()  # Show the dialog window
     root.mainloop()
 
+# Function to show the corresponding character stats
 def gun():
     show_character_dialog("Gunner")
 
@@ -79,6 +83,7 @@ def sword():
 def warlock():
     show_character_dialog("Warlock")
 
+# Function to draw the buttons to select the character
 def draw_button():
     pygame.draw.rect(window, "white", (button_gun_x, button_gun_y, 300, 600))
     pygame.draw.rect(window, "blue", (button_sword_x, button_sword_y, 300, 600))

@@ -13,6 +13,7 @@ pygame.display.set_caption("Snake's Game")
 button_x = (WINDOW_WIDTH - 300) // 2
 button_y = (WINDOW_HEIGHT - 50) // 2
 
+# Function to draw the button to run the character selection
 def draw_button():
     pygame.draw.rect(window, "white", (button_x, button_y, 300, 50))
     font = pygame.font.Font(None, 36)
@@ -20,6 +21,7 @@ def draw_button():
     text_rect = text.get_rect(center=(button_x + 150, button_y + 25))
     window.blit(text, text_rect)
 
+# Function to run the character selection
 def run_char():
     pygame.quit()
     subprocess.run(["python", "CharacterSelect.py"])

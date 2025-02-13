@@ -30,6 +30,7 @@ rows = 700 // box_size
 enemycounter = 0
 battle_result = None
 
+# Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
     global battle_result
     # Construct the command with arguments
@@ -59,6 +60,7 @@ def run_battle(character_name, enemycounter):
     if stderr_output:
         print(f"File 1: Error -> {stderr_output}")
 
+# Function to generate the starting grid
 def starting_grid():
     grid = [[0 for _ in range(cols)] for _ in range(rows)]
     start_x = (cols // 2) - 1
@@ -70,6 +72,7 @@ def starting_grid():
 
 last_shape = None
 
+# Functions to rotate a shape depending on the direction
 def rotate_shape_left(shape):
     return [(-y, x) for x, y in shape]
 
@@ -82,6 +85,7 @@ def rotate_shape_down(shape):
 def rotate_shape_up(shape):
     return [(x, -y) for x, y in shape]
 
+# Function to generate a random field for the player to walk on
 def random_field(grid, direction, dot_position):
     global last_shape
 
@@ -101,6 +105,7 @@ def random_field(grid, direction, dot_position):
         "SnakeRight": [(0, 0), (0, 1), (1, 1), (1, 2), (2, 2), (2, 3)]
     }
 
+    # Define blockade shapes to replace the original shapes if they can't be placed
     blockade_shapes = {
         "Block Long Line": [(0, 0), (0, 1), (0, 2)],
         "Block Line": [(0, 0), (0, 1)],
@@ -133,6 +138,7 @@ def random_field(grid, direction, dot_position):
     colliding_positions = []
     non_colliding_positions = []
 
+    # Correction so shape is placed correctly with the dot as center indication
     for dx, dy in shape:
         if direction == "up":
             if new_shape_name in ["O shape", "Large Square", "Small U-shape", "Large Plus"]:
@@ -175,7 +181,7 @@ def random_field(grid, direction, dot_position):
                 y = attach_y - abs(dy)
         else:
             x = attach_x + dx
-            y = attach_y + dy  # Default behavior for other cases
+            y = attach_y + dy  # Default behavior for other cases (failsafe)
         
         if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1 or grid[y][x] == "Enemy" or grid[y][x] == "Cleared" or grid[y][x] == "Runaway":
             can_place = False
@@ -215,6 +221,7 @@ def random_field(grid, direction, dot_position):
     if can_place:
         # Place the shape onto the grid
         for dx, dy in shape:
+            # Correction so shape is placed correctly with the dot as center indication
             if direction == "up":
                 if new_shape_name == "O shape" or new_shape_name == "Large Square" or new_shape_name == "Small U-shape" or new_shape_name == "Large Plus":
                     x = attach_x + dx - 1
@@ -258,6 +265,7 @@ def random_field(grid, direction, dot_position):
                     x = attach_x + dx 
                     y = attach_y - abs(dy)
 
+            # Generate a chance of an enemy appearing in a cell in the newly generated shape
             if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 2:
                 enemyBox = random.randint(0, 20)  # 1 in 20 chance of being an enemy
                 if enemyBox == 20:
@@ -269,7 +277,7 @@ def random_field(grid, direction, dot_position):
 
     return grid
 
-# Make the enemy cell a different color after the fight been won
+# Function to change value of cell to "Cleared" after winning a battle
 def fight_won():
     global grid, dot_position, battle_result
     x, y = dot_position
@@ -277,6 +285,7 @@ def fight_won():
         grid[y][x] = "Cleared"
     battle_result = None  # Reset battle_result
 
+# Function to change value of cell to "Runaway" after running away from a battle
 def Runaway():
     global grid, dot_position, battle_result
     x, y = dot_position
@@ -284,9 +293,10 @@ def Runaway():
         grid[y][x] = "Runaway"
     battle_result = None  # Reset battle_result
 
-# Define the color for the grid cells
+# Define the color for the walkable grid cells
 grid_color = (255, 255, 255)  # White
 
+# Function to draw the grid and give the corrisponding color to the cells
 def draw_grid(grid):
     for y in range(rows):
         for x in range(cols):
@@ -305,9 +315,11 @@ dot_position = [cols // 2, rows - 2]
 # Define the color for the red dot
 dot_color = (255, 0, 0)  # Red
 
+# Function to draw the red dot/player
 def draw_dot(position):
     pygame.draw.circle(screen, dot_color, (position[0] * box_size + box_size // 2, position[1] * box_size + box_size // 2), box_size // 4)
 
+# Function to check what cell the player is trying to move to and if it's a valid move
 def can_move_to(position, grid):
     x, y = position
     if 0 <= x < cols and 0 <= y < rows:
