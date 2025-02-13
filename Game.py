@@ -6,8 +6,6 @@ import time
 
 # Concepts: 
 # Herlaad de game als een bepaalde cel is bereikt, met de pop-up to clear the map.
-# Als de speler op een cell met enemy komt, maak de cell een andere kleur zodat hij nog een keer triggert
-# Remove the enemy from the cell after the battle is done and player did not run away
 
 # Initialize Pygame
 pygame.init()

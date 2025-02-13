@@ -45,7 +45,7 @@ def enemy_damage(enemycounter):
 
 # Function to make enemy
 def make_enemy():
-    return {"health": enemy_health(enemycounter), "damage": enemy_damage(enemycounter), "accuracy": enemy_accuracy(enemycounter)}
+    return {"health": enemy_health(enemycounter), "accuracy": enemy_accuracy(enemycounter)}
 
 # Initialize screen
 screen = pygame.display.set_mode((1280, 720))
@@ -230,15 +230,21 @@ def enemy_attack():
     if attack_enemy == "Tackle" or attack_enemy == "Scratch":
         last_enemy_attack = attack_enemy
         if hitOrMiss <= enemy["accuracy"]:
+            EnemyHitDamage = enemy_damage(enemycounter)
             print("Enemy hit!")
+            print(EnemyHitDamage)
             red_screen_overlay(screen)
             if last_player_attack == "Block":
-                enemy["damage"] = enemy["damage"] // 2
-                print(f"Enemy dealt {enemy['damage']} damage!")
-                character["health"] -= enemy["damage"]
+                EnemyHitDamage = EnemyHitDamage // 2
+                print(f"Enemy dealt {EnemyHitDamage} damage!")
+                character["health"] -= EnemyHitDamage
+                enemy_hit(EnemyHitDamage)
+                player_health_check()
             else:
                 print(f"Enemy dealt {enemy['damage']} damage!")
-                character["health"] -= enemy["damage"]
+                character["health"] -= EnemyHitDamage
+                enemy_hit(EnemyHitDamage)
+                player_health_check()
             print(f"Character health: {character['health']}")
             if character["health"] <= 0:
                 print("You lost!")
@@ -363,6 +369,65 @@ def player_action():
     pygame.font.init()
     font = pygame.font.SysFont('Arial', 30)  # Choose font and size
     text_surface = font.render(f"{character_name} used {attack_name}!", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+# Function to show the player how much damage they took
+def enemy_hit(damage):
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name} took {damage} damage!", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+def player_health_check():
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name} has {character['health']} health left", True, (255, 255, 255))  # Render text
 
     start_time = time.time()
 
