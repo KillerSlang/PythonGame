@@ -154,9 +154,9 @@ enemy = make_enemy()
 def attack(attack_name, stats):
     global last_player_attack
     print(f"{character_name} used {attack_name}! Damage: {stats['damage']}, Accuracy: {stats['accuracy']}%")
-    hitOrMiss = random.randint(1, 100)
     player_action()
-    if attack_name != "Block" or attack_name != "Dodge" or attack_name != "Cloak":
+    if attack_name != "Block" and attack_name != "Dodge" and attack_name != "Cloak":
+        hitOrMiss = random.randint(1, 100)
         if hitOrMiss <= stats["accuracy"]:
             print("You hit!")
             print("last attack: ", f"{last_enemy_attack}")
@@ -165,12 +165,13 @@ def attack(attack_name, stats):
                 print(f"Character health: {character['health']}")
                 if last_enemy_attack == "Block":
                     print("Block detected while Drain Life")
+                    original_damage = stats["damage"]
                     stats["damage"] = stats["damage"] // 2
                     enemy["health"] -= stats["damage"]
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
                     shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-                    stats["damage"] = stats["damage"] * 2
+                    stats["damage"] = original_damage
                 else:
                     enemy["health"] -= stats["damage"]
                     print(f"Enemy health: {enemy['health']}")
@@ -179,12 +180,13 @@ def attack(attack_name, stats):
             else:
                 if last_enemy_attack == "Block":
                     print("Block detected")
+                    original_damage = stats["damage"]
                     stats["damage"] = stats["damage"] // 2
                     enemy["health"] -= stats["damage"]
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
                     shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-                    stats["damage"] = stats["damage"] * 2
+                    stats["damage"] = original_damage
                 else:
                     enemy["health"] -= stats["damage"]
                     print(f"Enemy health: {enemy['health']}")

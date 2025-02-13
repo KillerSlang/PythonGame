@@ -28,8 +28,10 @@ cols = 1200 // box_size
 rows = 700 // box_size
 
 enemycounter = 0
+battle_result = None
 
 def run_battle(character_name, enemycounter):
+    global battle_result
     # Construct the command with arguments
     command = ["python", "EnemyEncounter.py", character_name, str(enemycounter)]
     
@@ -45,10 +47,10 @@ def run_battle(character_name, enemycounter):
             print(f"File 1: Received -> {output.strip()}")
             if output.strip() == "Win":
                 print(f"File 1: Received Final message -> Game won!")
-                fight_won()
+                battle_result = "Win"
             if output.strip() == "RunAway":
                 print(f"File 1: Received Final message -> Run away!")
-                Runaway()
+                battle_result = "RunAway"
             if output.strip() == "Lose":
                 print(f"File 1: Received Final message -> Game lost!")
             
@@ -175,7 +177,7 @@ def random_field(grid, direction, dot_position):
             x = attach_x + dx
             y = attach_y + dy  # Default behavior for other cases
         
-        if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1 or grid[y][x] == "Enemy":
+        if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1 or grid[y][x] == "Enemy" or grid[y][x] == "Cleared" or grid[y][x] == "Runaway":
             can_place = False
             colliding_positions.append((x, y))  # Store colliding positions
         else:
@@ -269,16 +271,18 @@ def random_field(grid, direction, dot_position):
 
 # Make the enemy cell a different color after the fight been won
 def fight_won():
-    global grid, dot_position
+    global grid, dot_position, battle_result
     x, y = dot_position
     if 0 <= x < cols and 0 <= y < rows:
         grid[y][x] = "Cleared"
+    battle_result = None  # Reset battle_result
 
 def Runaway():
-    global grid, dot_position
+    global grid, dot_position, battle_result
     x, y = dot_position
     if 0 <= x < cols and 0 <= y < rows:
         grid[y][x] = "Runaway"
+    battle_result = None  # Reset battle_result
 
 # Define the color for the grid cells
 grid_color = (255, 255, 255)  # White
@@ -317,6 +321,8 @@ def can_move_to(position, grid):
             print("Old Enemy Detected!")
             run_battle(character_name, enemycounter)
             return grid[y][x] == "Runaway"
+        elif grid[y][x] == "Cleared":
+            return True
         else:
             return grid[y][x] == 1
     return False
@@ -347,6 +353,10 @@ while running:
             # Check if the new position is valid
             if can_move_to(new_position, grid):
                 dot_position = new_position
+                if battle_result == "Win":
+                    fight_won()
+                elif battle_result == "RunAway":
+                    Runaway()
             elif direction:
                 # Generate a random field in the direction of the attempted move
                 grid = random_field(grid, direction, new_position)  # Pass the new position
