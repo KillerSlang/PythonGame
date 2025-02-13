@@ -2,6 +2,7 @@ import pygame
 import sys
 import random
 import subprocess
+import time
 
 # Concepts: 
 # Herlaad de game als een bepaalde cel is bereikt, met de pop-up to clear the map.
@@ -44,7 +45,13 @@ def run_battle(character_name, enemycounter):
             print(f"File 1: Received -> {output.strip()}")
             if output.strip() == "Win":
                 print(f"File 1: Received Final message -> Game won!")
-    
+                fight_won()
+            if output.strip() == "RunAway":
+                print(f"File 1: Received Final message -> Run away!")
+                Runaway()
+            if output.strip() == "Lose":
+                print(f"File 1: Received Final message -> Game lost!")
+            
     # Capture any errors
     stderr_output = process.stderr.read().strip()
     if stderr_output:
@@ -197,9 +204,9 @@ def random_field(grid, direction, dot_position):
         for dx, dy in shape:
             x = attach_x + dx
             y = attach_y + dy
-            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] != "Enemy":
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] != "Enemy" and grid[y][x] != "Cleared" and grid[y][x] != "Runaway":
                 grid[y][x] = 2
-            elif 0 <= x < cols and 0 <= y < rows and grid[y][x] != "Enemy":
+            elif 0 <= x < cols and 0 <= y < rows and grid[y][x] != "Enemy" and grid[y][x] != "Cleared" and grid[y][x] != "Runaway":
                 grid[y][x] = 1
 
 
@@ -260,6 +267,19 @@ def random_field(grid, direction, dot_position):
 
     return grid
 
+# Make the enemy cell a different color after the fight been won
+def fight_won():
+    global grid, dot_position
+    x, y = dot_position
+    if 0 <= x < cols and 0 <= y < rows:
+        grid[y][x] = "Cleared"
+
+def Runaway():
+    global grid, dot_position
+    x, y = dot_position
+    if 0 <= x < cols and 0 <= y < rows:
+        grid[y][x] = "Runaway"
+
 # Define the color for the grid cells
 grid_color = (255, 255, 255)  # White
 
@@ -270,6 +290,10 @@ def draw_grid(grid):
                 pygame.draw.rect(screen, grid_color, (x * box_size, y * box_size, box_size, box_size), 1)
             elif grid[y][x] == 2:
                 pygame.draw.rect(screen, (255, 0, 0), (x * box_size, y * box_size, box_size, box_size))  # Red for non-colliding positions
+            elif grid[y][x] == "Cleared":
+                pygame.draw.rect(screen, (0, 255, 0), (x * box_size, y * box_size, box_size, box_size))
+            elif grid[y][x] == "Runaway":
+                pygame.draw.rect(screen, (0, 0, 255), (x * box_size, y * box_size, box_size, box_size))
 
 # Define the initial position of the red dot
 dot_position = [cols // 2, rows - 2]
@@ -289,6 +313,10 @@ def can_move_to(position, grid):
             enemycounter += 1
             run_battle(character_name, enemycounter)
             return grid[y][x] == "Enemy"
+        elif grid[y][x] == "Runaway":
+            print("Old Enemy Detected!")
+            run_battle(character_name, enemycounter)
+            return grid[y][x] == "Runaway"
         else:
             return grid[y][x] == 1
     return False

@@ -286,12 +286,21 @@ def enemy_action(attack_enemy_name):
 
 # Function to handle escape attempt
 def escape():
+    escape_attempt()
     if random.choice([0, 3]) == 0:
+        escape_success()
         print("Escaped!")
+        sys.stdout.flush()
+        time.sleep(1)
+        result = "RunAway"
+        print(result)
+        sys.stdout.flush()
         pygame.quit()
         sys.exit()
     else:
         print("You failed to escape!")
+        escape_failed()
+        enemy_attack()
 
 def slash_animation():
     start_time = time.time()
@@ -503,6 +512,110 @@ def game_won():
     start_time = time.time()
 
     while time.time() - start_time < 1.0:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_wait = font.render("Please wait....", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 1.0:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_wait.get_width()) // 2
+        text_y = box_y + (box_height - text_wait.get_height()) // 2
+        screen.blit(text_wait, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+def escape_attempt():
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name} attempts to escape", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+def escape_failed():
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name}'s escape failed....", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
+        # Show the black box with a white border
+        pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
+        pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
+        
+        # Blit the text onto the screen
+        text_x = box_x + (box_width - text_surface.get_width()) // 2
+        text_y = box_y + (box_height - text_surface.get_height()) // 2
+        screen.blit(text_surface, (text_x, text_y))
+
+        pygame.display.flip()
+
+    screen.fill((0, 0, 0))
+    screen.blit(enemy_image, (enemy_x, enemy_y))
+    pygame.display.flip()
+
+def escape_success():
+    # Box position (in front of the enemy)
+    box_width, box_height = 1200, 100
+    box_x = enemy_x + (enemy_image.get_width() // 2) - (box_width // 2)
+    box_y = enemy_y + (enemy_image.get_height() - box_height)
+
+    # Initialize font
+    pygame.font.init()
+    font = pygame.font.SysFont('Arial', 30)  # Choose font and size
+    text_surface = font.render(f"{character_name} escaped successfully", True, (255, 255, 255))  # Render text
+
+    start_time = time.time()
+
+    while time.time() - start_time < 0.5:
         # Show the black box with a white border
         pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))  # Black box
         pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 5)  # White border
