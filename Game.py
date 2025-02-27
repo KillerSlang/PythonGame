@@ -314,6 +314,13 @@ def draw_grid(grid):
             elif grid[y][x] == "Runaway":
                 pygame.draw.rect(screen, (0, 0, 255), (x * box_size, y * box_size, box_size, box_size))
 
+# Function to reload the map after the correct cell has been found
+def reload_map():
+    global grid, dot_position
+    grid = starting_grid()
+    dot_position = [cols // 2, rows - 2]
+    
+
 # Define the initial position of the red dot
 dot_position = [cols // 2, rows - 2]
 
