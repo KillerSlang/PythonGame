@@ -1,53 +1,52 @@
 import pygame
-import os
 
 # Initialize Pygame
 pygame.init()
 
-# Screen settings
+# Constants
 WIDTH, HEIGHT = 800, 600
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Enemy health properties
+MAX_HEALTH = 100
+
+# Create game window
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Enemy Health Bar Example")
+
+def draw_health_bar(screen, x, y, health, max_health, width=100, height=15):
+    """Draws a health bar with color transitioning from green to red."""
+    # Calculate health ratio
+    health_ratio = max(health / max_health, 0)  # Ensure it doesn't go below 0
+    
+    # Interpolate color from green (0,255,0) to red (255,0,0)
+    red = int((1 - health_ratio) * 255)
+    green = int(health_ratio * 255)
+    
+    # Health bar background
+    pygame.draw.rect(screen, BLACK, (x - 2, y - 2, width + 4, height + 4))  # Border
+    pygame.draw.rect(screen, (red, green, 0), (x, y, int(width * health_ratio), height))  # Health
+
+# Main loop
+running = True
+enemy_health = MAX_HEALTH
 clock = pygame.time.Clock()
 
-# Load Image
-image_path = "Images/Slash.png"
-
-# Check if the image exists
-if not os.path.exists(image_path):
-    print(f"Error: {image_path} not found.")
-    pygame.quit()
-    exit()
-
-image = pygame.image.load(image_path)  # Replace with your image path
-image_rect = image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-
-# Animation Variables
-mask_width = image_rect.width  # Start fully visible
-speed = 10  # Speed of transition
-revealing = False  # Start by hiding
-
-running = True
 while running:
-    screen.fill((0, 0, 0))  # Clear screen
+    screen.fill(WHITE)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:  # Press SPACE to deal damage
+                enemy_health = max(enemy_health - 10, 0)
 
-    # Update mask width
-    if revealing:
-        mask_width += speed  # Increase mask width (reveal)
-        if mask_width >= image_rect.width:
-            revealing = False  # Switch to hiding
-    else:
-        mask_width -= speed  # Decrease mask width (hide from right)
-        if mask_width <= 0:
-            revealing = True  # Reset to reveal
+    # Draw the health bar at position (350, 250)
+    draw_health_bar(screen, 350, 250, enemy_health, MAX_HEALTH)
 
-    # Draw Image with Mask (Shift left to reveal from right)
-    screen.blit(image, (image_rect.x + (image_rect.width - mask_width), image_rect.y), (image_rect.width - mask_width, 0, mask_width, image_rect.height))
-
-    pygame.display.flip()  # Update display
-    clock.tick(30)  # Control frame rate
+    pygame.display.flip()
+    clock.tick(30)
 
 pygame.quit()

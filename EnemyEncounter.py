@@ -1,5 +1,6 @@
 import pygame
 import sys
+import subprocess
 import random
 import tkinter as tk
 from tkinter import messagebox
@@ -7,7 +8,7 @@ import time
 
 pygame.init()
 
-# Healthbars
+# Healthbar for player?
 
 # Get character name from command line arguments
 character_name = sys.argv[1] if len(sys.argv) > 1 else "Unknown"
@@ -34,13 +35,12 @@ def enemy_accuracy(enemycounter):
 # Function to calculate enemy damage depending on enemy counter
 def enemy_damage(enemycounter):
     damage = 10 * (enemycounter / 2)
+    halfDamage = damage / 2
+    damage = random.randint(int(halfDamage), int(damage))
     if damage < 5:
         damage = 5
     elif damage > 40:
         damage = 40
-    halfDamage = damage / 2
-    damage = random.randint(int(halfDamage), int(damage))
-
     return damage
 
 # Function to make enemy
@@ -97,10 +97,7 @@ bottom_right_button_rect = pygame.Rect(
 
 # Give tutorial pop-up message if first fight
 if enemycounter == 1:
-    root = tk.Tk()
-    root.withdraw()
-    messagebox.showinfo("Enemy Encounter", "An enemy has appeared!")
-    root.destroy()
+    subprocess.run(["python", "Tutorial.py"])
 
 # Character stats dictionary
 character_stats = {
@@ -195,7 +192,7 @@ def attack(attack_name, stats):
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
                     shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-            
+            last_player_attack = attack_name
             if enemy["health"] <= 0:
                 print("Win condition met")
                 game_won()
@@ -232,7 +229,8 @@ def enemy_attack():
         if hitOrMiss <= enemy["accuracy"]:
             EnemyHitDamage = enemy_damage(enemycounter)
             print("Enemy hit!")
-            print(EnemyHitDamage)
+            print("Enemy hit damage: ", EnemyHitDamage)
+            print("last player attack: ", f"{last_player_attack}")
             red_screen_overlay(screen)
             if last_player_attack == "Block":
                 EnemyHitDamage = EnemyHitDamage // 2
@@ -241,7 +239,7 @@ def enemy_attack():
                 enemy_hit(EnemyHitDamage)
                 player_health_check()
             else:
-                print(f"Enemy dealt {enemy['damage']} damage!")
+                print(f"Enemy dealt {EnemyHitDamage} damage!")
                 character["health"] -= EnemyHitDamage
                 enemy_hit(EnemyHitDamage)
                 player_health_check()
@@ -726,6 +724,22 @@ def escape_success():
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
 
+# Function to show the enemy's healthbar
+def draw_health_bar(screen, x, y, health, max_health, width=100, height=15):
+    """Draws a health bar with color transitioning from green to red."""
+    # Calculate health ratio
+    health_ratio = max(health / max_health, 0)  # Ensure it doesn't go below 0
+    
+    # Interpolate color from green (0,255,0) to red (255,0,0)
+    # Ensure red and green values are clamped between 0 and 255
+    red = max(0, min(255, int((1 - health_ratio) * 255)))
+    green = max(0, min(255, int(health_ratio * 255)))
+
+    
+    # Health bar background
+    pygame.draw.rect(screen, (0,0,0), (x - 2, y - 2, width + 4, height + 4))  # Border
+    pygame.draw.rect(screen, (red, green, 0), (x, y, int(width * health_ratio), height))  # Health
+
 show_stats = False
 running = True
 
@@ -751,6 +765,9 @@ while running:
     
     # Draw centered image above the buttons
     screen.blit(enemy_image, (enemy_x, enemy_y))
+
+    # Draw the health bar at a fixed position relative to the window
+    draw_health_bar(screen, screen.get_width() // 2 - 50, 50, enemy["health"], enemy_health(enemycounter))
 
     attacks_with_stats = chosen_attacks()
 

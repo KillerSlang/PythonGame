@@ -52,6 +52,7 @@ def run_battle(character_name, enemycounter):
                 battle_result = "RunAway"
             if output.strip() == "Lose":
                 print(f"File 1: Received Final message -> Game lost!")
+                fight_lost()
             
     # Capture any errors
     stderr_output = process.stderr.read().strip()
@@ -290,6 +291,11 @@ def Runaway():
     if 0 <= x < cols and 0 <= y < rows:
         grid[y][x] = "Runaway"
     battle_result = None  # Reset battle_result
+
+# Function to close the game if the player loses a battle
+def fight_lost():
+    pygame.quit()
+    sys.exit()
 
 # Define the color for the walkable grid cells
 grid_color = (255, 255, 255)  # White
