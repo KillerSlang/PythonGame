@@ -294,6 +294,7 @@ def Runaway():
 
 # Function to close the game if the player loses a battle
 def fight_lost():
+    print("Closing window...")
     pygame.quit()
     sys.exit()
 

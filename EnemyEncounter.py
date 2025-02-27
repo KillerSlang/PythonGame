@@ -246,6 +246,11 @@ def enemy_attack():
             print(f"Character health: {character['health']}")
             if character["health"] <= 0:
                 print("You lost!")
+                sys.stdout.flush()
+                time.sleep(1)
+                result = "Lose"
+                print(result)
+                sys.stdout.flush()
                 pygame.quit()
                 sys.exit()
         else:
