@@ -6,6 +6,7 @@ import time
 
 # Concepts: 
 # Herlaad de game als een bepaalde cel is bereikt, met de pop-up to clear the map.
+# make the cell appear 1 in 500 chance
 
 # Initialize Pygame
 pygame.init()
@@ -25,8 +26,9 @@ box_size = 25
 cols = 1200 // box_size
 rows = 700 // box_size
 
-enemycounter = 0
-battle_result = None
+enemycounter = 0 # used to adjust enemy difficulty
+battle_result = None # used to decide the color of the cell after battle
+cellGameWon = False # used to reload the map or finish the game after the correct cell has been found
 
 # Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
