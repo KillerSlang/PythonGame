@@ -29,6 +29,7 @@ rows = 700 // box_size
 enemycounter = 0 # used to adjust enemy difficulty
 battle_result = None # used to decide the color of the cell after battle
 cellGameWon = False # used to reload the map or finish the game after the correct cell has been found
+gameWinCell = None
 
 # Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
@@ -88,7 +89,7 @@ def rotate_shape_up(shape):
 
 # Function to generate a random field for the player to walk on
 def random_field(grid, direction, dot_position):
-    global last_shape
+    global last_shape, cellGameWon, gameWinCell
 
     # Define possible shapes with names
     shapes = {
@@ -273,10 +274,33 @@ def random_field(grid, direction, dot_position):
                     grid[y][x] = "Enemy"
                 else:
                     grid[y][x] = 1
-    else:
-        print("Shape placement failed due to collision or being out of bounds.")
+
+    # Ensure one cell is randomly selected and made yellow in each generation
+    if not cellGameWon:
+        gameWinCell = random.randint(0, 500)
+        print(gameWinCell)
+        if gameWinCell == 500:
+            cellGameWon = True
+            win_x = random.randint(0, cols - 1)
+            win_y = random.randint(0, rows - 1)
+            grid[win_y][win_x] = "Win"
 
     return grid
+
+last_shape = None
+
+# Functions to rotate a shape depending on the direction
+def rotate_shape_left(shape):
+    return [(-y, x) for x, y in shape]
+
+def rotate_shape_right(shape):
+    return [(y, x) for x, y in shape]
+
+def rotate_shape_down(shape):
+    return [(x, y) for x, y in shape]
+
+def rotate_shape_up(shape):
+    return [(x, -y) for x, y in shape]
 
 # Function to change value of cell to "Cleared" after winning a battle
 def fight_won():
@@ -303,8 +327,9 @@ def fight_lost():
 # Define the color for the walkable grid cells
 grid_color = (255, 255, 255)  # White
 
-# Function to draw the grid and give the corrisponding color to the cells
+# Function to draw the grid and give the corresponding color to the cells
 def draw_grid(grid):
+    global cellGameWon, gameWinCell
     for y in range(rows):
         for x in range(cols):
             if grid[y][x] == 1 or grid[y][x] == "Enemy":
@@ -315,6 +340,8 @@ def draw_grid(grid):
                 pygame.draw.rect(screen, (0, 255, 0), (x * box_size, y * box_size, box_size, box_size))
             elif grid[y][x] == "Runaway":
                 pygame.draw.rect(screen, (0, 0, 255), (x * box_size, y * box_size, box_size, box_size))
+            elif grid[y][x] == "Win":
+                pygame.draw.rect(screen, (255, 255, 0), (x * box_size, y * box_size, box_size, box_size), 1)  # Yellow for the winning cell
 
 # Function to reload the map after the correct cell has been found
 def reload_map():
