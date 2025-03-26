@@ -4,9 +4,9 @@ import random
 import subprocess
 import time
 
-# Concepts: 
-# Herlaad de game als een bepaalde cel is bereikt, met de pop-up to clear the map.
-# make the cell appear 1 in 500 chance
+# Concept ideas:
+# Items: Health Potion, Mana Potion, Revive Scroll, Damage Boost?
+# Enemies: Normal, Elite, Boss?
 
 # Initialize Pygame
 pygame.init()
