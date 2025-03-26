@@ -30,6 +30,7 @@ enemycounter = 0 # used to adjust enemy difficulty
 battle_result = None # used to decide the color of the cell after battle
 cellGameWon = False # used to reload the map or finish the game after the correct cell has been found
 gameWinCell = None
+randomWinCell = 900 # Change to 900 when finished testing
 
 # Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
@@ -180,10 +181,7 @@ def random_field(grid, direction, dot_position):
                 y = attach_y - abs(dy) + 1
             else:
                 x = attach_x + dx
-                y = attach_y - abs(dy)
-        else:
-            x = attach_x + dx
-            y = attach_y + dy  # Default behavior for other cases (failsafe)
+                y = attach_y + dy  # Default behavior for other cases (failsafe)
         
         if not (0 <= x < cols and 0 <= y < rows) or grid[y][x] == 1 or grid[y][x] == "Enemy" or grid[y][x] == "Cleared" or grid[y][x] == "Runaway":
             can_place = False
@@ -275,15 +273,18 @@ def random_field(grid, direction, dot_position):
                 else:
                     grid[y][x] = 1
 
-    # Ensure one cell is randomly selected and made yellow in each generation
-    if not cellGameWon:
-        gameWinCell = random.randint(0, 500)
-        print(gameWinCell)
-        if gameWinCell == 500:
-            cellGameWon = True
-            win_x = random.randint(0, cols - 1)
-            win_y = random.randint(0, rows - 1)
-            grid[win_y][win_x] = "Win"
+            # Ensure one cell is randomly selected and made yellow in each generation
+            if not cellGameWon:
+                global randomWinCell
+                gameWinCell = random.randint(0, randomWinCell)
+                print(gameWinCell)
+                if gameWinCell == randomWinCell:
+                    cellGameWon = True
+                    grid[y][x] = "Win"
+                else:
+                    gameWinCell -= 1
+                    randomWinCell -= 1  # Decrement randomWinCell after each roll
+                    print("GameWinCell: ", randomWinCell)
 
     return grid
 
@@ -329,7 +330,6 @@ grid_color = (255, 255, 255)  # White
 
 # Function to draw the grid and give the corresponding color to the cells
 def draw_grid(grid):
-    global cellGameWon, gameWinCell
     for y in range(rows):
         for x in range(cols):
             if grid[y][x] == 1 or grid[y][x] == "Enemy":
@@ -345,24 +345,34 @@ def draw_grid(grid):
 
 # Function to reload the map after the correct cell has been found
 def reload_map():
-    global grid, dot_position
-    grid = starting_grid()
-    dot_position = [cols // 2, rows - 2]
-    
+    global grid, dot_position, randomWinCell, gameWinCell
+    gameWinCell = None
+    randomWinCell = 20
+    screen.fill((0, 0, 0))  # Fill the screen with a black background
+    grid = starting_grid()  # Generate a new starting grid
+    draw_grid(grid)  # Draw the grid on the screen
+    pygame.display.flip()  # Update the display
+    print("Screen cleared.")
 
 # Define the initial position of the red dot
 dot_position = [cols // 2, rows - 2]
 
 # Define the color for the red dot
-dot_color = (255, 0, 0)  # Red
+dot_color = (255, 0, 0)
 
 # Function to draw the red dot/player
 def draw_dot(position):
-    pygame.draw.circle(screen, dot_color, (position[0] * box_size + box_size // 2, position[1] * box_size + box_size // 2), box_size // 4)
+    if position is not None:  # Only draw the dot if the position is not None
+        pygame.draw.circle(screen, dot_color, (position[0] * box_size + box_size // 2, position[1] * box_size + box_size // 2), box_size // 4)
+    else:
+        # Clear the screen or redraw the grid to remove the dot
+        screen.fill((0, 0, 0))  # Fill the screen with a black background
 
 # Function to check what cell the player is trying to move to and if it's a valid move
 def can_move_to(position, grid):
-    x, y = position
+    global cellGameWon
+    if position != None:
+        x, y = position
     if 0 <= x < cols and 0 <= y < rows:
         if grid[y][x] == "Enemy":
             print("Enemy Detected!")
@@ -374,6 +384,13 @@ def can_move_to(position, grid):
             print("Old Enemy Detected!")
             run_battle(character_name, enemycounter)
             return grid[y][x] == "Runaway"
+        elif grid[y][x] == "Win":
+            print("Win cell reached. Reloading map...")
+            reload_map()
+            position[0] = 24
+            position[1] = 26
+            cellGameWon = False
+            return grid[y][x] == "Win"
         elif grid[y][x] == "Cleared":
             return True
         else:
@@ -384,35 +401,39 @@ def can_move_to(position, grid):
 running = True
 grid = starting_grid()
 while running:
+    if dot_position is None:
+        print("Dot position is None")
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            new_position = dot_position[:]
-            direction = None
-            if event.key == pygame.K_a:  # Move left
-                new_position[0] -= 1
-                direction = "left"
-            elif event.key == pygame.K_d:  # Move right
-                new_position[0] += 1
-                direction = "right"
-            elif event.key == pygame.K_w:  # Move up
-                new_position[1] -= 1
-                direction = "up"
-            elif event.key == pygame.K_s:  # Move down
-                new_position[1] += 1
-                direction = "down"
+            if dot_position != None:  # Only process movement if the dot exists
+                new_position = dot_position[:]
+                direction = None
+                if event.key == pygame.K_a:  # Move left
+                    new_position[0] -= 1
+                    direction = "left"
+                elif event.key == pygame.K_d:  # Move right
+                    new_position[0] += 1
+                    direction = "right"
+                elif event.key == pygame.K_w:  # Move up
+                    new_position[1] -= 1
+                    direction = "up"
+                elif event.key == pygame.K_s:  # Move down
+                    new_position[1] += 1
+                    direction = "down"
 
-            # Check if the new position is valid
-            if can_move_to(new_position, grid):
-                dot_position = new_position
-                if battle_result == "Win":
-                    fight_won()
-                elif battle_result == "RunAway":
-                    Runaway()
-            elif direction:
-                # Generate a random field in the direction of the attempted move
-                grid = random_field(grid, direction, new_position)  # Pass the new position
+                # Check if the new position is valid
+                if can_move_to(new_position, grid):
+                    dot_position = new_position
+                    if battle_result == "Win":
+                        fight_won()
+                    elif battle_result == "RunAway":
+                        Runaway()
+                elif direction:
+                    # Generate a random field in the direction of the attempted move
+                    grid = random_field(grid, direction, new_position)  # Pass the new position
 
     # Fill the screen with a black background
     screen.fill((0, 0, 0))
@@ -420,8 +441,9 @@ while running:
     # Draw the grid
     draw_grid(grid)
 
-    # Draw the red dot
-    draw_dot(dot_position)
+    # Draw the red dot only if dot_position is not None
+    if dot_position is not None:
+        draw_dot(dot_position)
 
     # Update the display
     pygame.display.flip()
