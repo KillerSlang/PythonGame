@@ -3,10 +3,12 @@ import sys
 import random
 import subprocess
 import time
+import json  # Add this import for JSON serialization
 
 # Concept ideas:
 # Items: Health Potion, Mana Potion, Revive Scroll, Damage Boost?
 # Enemies: Normal, Elite, Boss?
+# Cheatcode/secret input?
 
 # Initialize Pygame
 pygame.init()
@@ -32,16 +34,28 @@ cellGameWon = False # used to reload the map or finish the game after the correc
 gameWinCell = None
 randomWinCell = 900 # Change to 900 when finished testing
 
+items = {
+    "Health Potion",
+    "Damage Boost",
+    "Weaken Potion"
+}
+
+inventory = [] # Initialize inventory as an empty list
+
 # Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
-    global battle_result
+    global battle_result, inventory
+    # Serialize the inventory to a JSON string
+    inventory_json = json.dumps(inventory)
+    
     # Construct the command with arguments
-    command = ["python", "EnemyEncounter.py", character_name, str(enemycounter)]
+    command = ["python", "EnemyEncounter.py", character_name, str(enemycounter), inventory_json]
     
     # Start the subprocess with Popen
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     
     # Read output and error as they are generated
+    updated_inventory = None
     while True:
         output = process.stdout.readline()
         if output == "" and process.poll() is not None:
@@ -51,17 +65,31 @@ def run_battle(character_name, enemycounter):
             if output.strip() == "Win":
                 print(f"File 1: Received Final message -> Game won!")
                 battle_result = "Win"
-            if output.strip() == "RunAway":
+            elif output.strip() == "RunAway":
                 print(f"File 1: Received Final message -> Run away!")
                 battle_result = "RunAway"
-            if output.strip() == "Lose":
+            elif output.strip() == "Lose":
                 print(f"File 1: Received Final message -> Game lost!")
                 fight_lost()
+            else:
+                # Attempt to parse the updated inventory
+                try:
+                    updated_inventory = json.loads(output.strip())
+                except json.JSONDecodeError:
+                    pass
             
     # Capture any errors
     stderr_output = process.stderr.read().strip()
     if stderr_output:
         print(f"File 1: Error -> {stderr_output}")
+    
+    # Update the inventory if it was returned
+    if updated_inventory is not None:
+        inventory = updated_inventory
+        print(f"Updated inventory: {inventory}")
+    
+    # Print the inventory after the battle
+    print("Inventory after battle:", inventory)
 
 # Function to generate the starting grid
 def starting_grid():
@@ -212,9 +240,9 @@ def random_field(grid, direction, dot_position):
         for dx, dy in shape:
             x = attach_x + dx
             y = attach_y + dy
-            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] != "Enemy" and grid[y][x] != "Cleared" and grid[y][x] != "Runaway":
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 1 and grid[y][x] != "Enemy" and grid[y][x] != "Cleared" and grid[y][x] != "Runaway" and grid[y][x] != "Item":
                 grid[y][x] = 2
-            elif 0 <= x < cols and 0 <= y < rows and grid[y][x] != "Enemy" and grid[y][x] != "Cleared" and grid[y][x] != "Runaway":
+            elif 0 <= x < cols and 0 <= y < rows and grid[y][x] != "Enemy" and grid[y][x] != "Cleared" and grid[y][x] != "Runaway" and grid[y][x] != "Item":
                 grid[y][x] = 1
 
 
@@ -272,6 +300,13 @@ def random_field(grid, direction, dot_position):
                     grid[y][x] = "Enemy"
                 else:
                     grid[y][x] = 1
+            
+            if 0 <= x < cols and 0 <= y < rows and grid[y][x] != 2 and grid[y][x] != "Enemy":
+                itembox = random.randint(0, 15)  # 1 in 15 chance of being an item
+                if itembox == 15:
+                    grid[y][x] = "Item"
+                else:
+                    grid[y][x] = 1
 
             # Ensure one cell is randomly selected and made yellow in each generation
             if not cellGameWon:
@@ -325,6 +360,72 @@ def fight_lost():
     pygame.quit()
     sys.exit()
 
+# Function to obtain an item from a selection screen after which the item is randomly selected with more odds to the selected item and then added to the inventory
+def obtain_item_selection():
+    global inventory
+    # Convert items to a list for consistent ordering
+    items_list = list(items)
+
+    # Set up the pop-up window dimensions
+    popup_width, popup_height = 400, 300
+    popup = pygame.Surface((popup_width, popup_height))
+    popup.fill((50, 50, 50))  # Dark gray background
+
+    # Define fonts and colors
+    font = pygame.font.Font(None, 36)
+    text_color = (255, 255, 255)  # White
+    button_color = (100, 100, 255)  # Light blue
+    button_hover_color = (150, 150, 255)  # Lighter blue
+    button_width, button_height = 200, 50
+
+    # Calculate button positions
+    button_positions = []
+    for i, item in enumerate(items_list):
+        x = (popup_width - button_width) // 2
+        y = 50 + i * (button_height + 20)
+        button_positions.append((x, y, button_width, button_height))
+
+    # Display the pop-up and handle selection
+    selected_item = None
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+                for i, (x, y, w, h) in enumerate(button_positions):
+                    if x <= mouse_x - (screen.get_width() - popup_width) // 2 <= x + w and \
+                       y <= mouse_y - (screen.get_height() - popup_height) // 2 <= y + h:
+                        selected_item = items_list[i]
+                        running = False
+
+        # Draw the pop-up
+        popup.fill((50, 50, 50))  # Clear the pop-up background
+        for i, (x, y, w, h) in enumerate(button_positions):
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            if x <= mouse_x - (screen.get_width() - popup_width) // 2 <= x + w and \
+               y <= mouse_y - (screen.get_height() - popup_height) // 2 <= y + h:
+                pygame.draw.rect(popup, button_hover_color, (x, y, w, h))
+            else:
+                pygame.draw.rect(popup, button_color, (x, y, w, h))
+            text = font.render(items_list[i], True, text_color)
+            popup.blit(text, (x + (w - text.get_width()) // 2, y + (h - text.get_height()) // 2))
+
+        # Blit the pop-up onto the main screen
+        screen.blit(popup, ((screen.get_width() - popup_width) // 2, (screen.get_height() - popup_height) // 2))
+        pygame.display.flip()
+
+    if selected_item:
+        print(f"You selected: {selected_item}")
+        # Randomly select an item with more odds to the selected item
+        item = random.choices([selected_item] + items_list, weights=[3] + [1] * len(items_list), k=1)[0]
+        inventory.append(item)
+        print(f"Item obtained: {item}")
+    else:
+        print("No item selected. No item obtained.")
+
 # Define the color for the walkable grid cells
 grid_color = (255, 255, 255)  # White
 
@@ -332,7 +433,7 @@ grid_color = (255, 255, 255)  # White
 def draw_grid(grid):
     for y in range(rows):
         for x in range(cols):
-            if grid[y][x] == 1 or grid[y][x] == "Enemy":
+            if grid[y][x] == 1 or grid[y][x] == "Enemy" or grid[y][x] == "Item":
                 pygame.draw.rect(screen, grid_color, (x * box_size, y * box_size, box_size, box_size), 1)
             elif grid[y][x] == 2:
                 pygame.draw.rect(screen, (255, 0, 0), (x * box_size, y * box_size, box_size, box_size))  # Red for non-colliding positions
@@ -392,6 +493,12 @@ def can_move_to(position, grid):
             cellGameWon = False
             return grid[y][x] == "Win"
         elif grid[y][x] == "Cleared":
+            return True
+        elif grid[y][x] == "Item":  # Allow movement onto "Item" cells
+            obtain_item_selection()  # Call the item selection function
+            print("Item collected!")
+            print("Inventory:", inventory)  # Print the inventory after collecting the item
+            grid[y][x] = "Cleared"  # Mark the cell as cleared after collecting the item
             return True
         else:
             return grid[y][x] == 1

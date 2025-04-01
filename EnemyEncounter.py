@@ -5,6 +5,7 @@ import random
 import tkinter as tk
 from tkinter import messagebox
 import time
+import json  # Add this import for JSON deserialization
 
 pygame.init()
 
@@ -16,6 +17,9 @@ character_name = sys.argv[1] if len(sys.argv) > 1 else "Unknown"
 # Get enemy counter
 enemycounter = int(sys.argv[2]) if len(sys.argv) > 2 else 0
 print(f"Enemy counter: {enemycounter}")
+
+# Parse the inventory from command-line arguments
+inventory = json.loads(sys.argv[3]) if len(sys.argv) > 3 else []
 
 # Function to calculate enemy health depending on enemy counter
 def enemy_health(enemycounter):
@@ -90,9 +94,17 @@ for i in range(2):
 # Escape button
 bottom_right_button_rect = pygame.Rect(
     screen.get_width() - 300,
+    screen.get_height() - 80,
+    280,
+    80
+)
+
+# Define the "Items" button rectangle
+items_button_rect = pygame.Rect(
+    screen.get_width() - 300,
     screen.get_height() - 180,
     280,
-    180
+    80
 )
 
 # Give tutorial pop-up message if first fight
@@ -127,6 +139,8 @@ attack_stats = {
 }
 
 attack_enemy_list = ["Tackle", "Scratch", "Block", "Recovery"]
+
+last_item_used = None
 
 last_enemy_attack = None
 
@@ -745,6 +759,71 @@ def draw_health_bar(screen, x, y, health, max_health, width=100, height=15):
     pygame.draw.rect(screen, (0,0,0), (x - 2, y - 2, width + 4, height + 4))  # Border
     pygame.draw.rect(screen, (red, green, 0), (x, y, int(width * health_ratio), height))  # Health
 
+
+# Function to show inventory in a pop-up
+def show_inventory(inventory):
+    """
+    Displays the inventory in a pop-up window and allows the player to use items.
+    """
+    def on_use_item():
+        selected_item = listbox.get(tk.ACTIVE)
+        if selected_item:
+            use_item(selected_item)
+            listbox.delete(tk.ACTIVE)  # Remove the item from the listbox
+            root.destroy()  # Close the inventory window
+
+    root = tk.Tk()
+    root.title("Inventory")
+    root.geometry("300x300")
+
+    # Add a label for the inventory title
+    label = tk.Label(root, text="Your Inventory", font=("Arial", 14))
+    label.pack(pady=10)
+
+    # Add a listbox to display the items
+    listbox = tk.Listbox(root, font=("Arial", 12))
+    for item in inventory:
+        listbox.insert(tk.END, item)
+    listbox.pack(pady=10)
+
+    # Add a "Use Item" button
+    use_button = tk.Button(root, text="Use Item", command=on_use_item, font=("Arial", 12))
+    use_button.pack(pady=10)
+
+    # Add a close button
+    close_button = tk.Button(root, text="Close", command=root.destroy, font=("Arial", 12))
+    close_button.pack(pady=10)
+
+    # Run the tkinter main loop
+    root.mainloop()
+
+def use_item(item_name):
+    """
+    Handles the usage of an item from the inventory.
+    Removes the item from the inventory after use.
+    """
+    global inventory
+    if item_name == "Health Potion":
+        character["health"] += 20
+        print(f"{character_name} used {item_name} and recovered 20 health!")
+        print(f"Character health: {character['health']}")
+    elif item_name == "Damage Boost":
+        character["attack"] += 10
+        print(f"{character_name} used {item_name} and gained 10 attack!")
+    elif item_name == "Weaken Potion":
+        character["defense"] += 10
+        print(f"{character_name} used {item_name} and gained 10 defense!")
+    else:
+        print(f"{item_name} has no effect.")
+
+    # Remove the used item from the inventory
+    inventory.remove(item_name)
+    print(f"Remaining inventory: {inventory}")
+
+    # Send the updated inventory back to the parent process
+    print(json.dumps(inventory))
+    sys.stdout.flush()
+
 show_stats = False
 running = True
 
@@ -762,6 +841,8 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if bottom_right_button_rect.collidepoint(event.pos):
                 escape()
+            elif items_button_rect.collidepoint(event.pos):
+                show_inventory(inventory)  # Show inventory when items button is clicked
             for button_rect, (attack_name, stats) in zip(buttonsList, chosen_attacks()):
                 if button_rect.collidepoint(event.pos):
                     attack(attack_name, stats)
@@ -789,11 +870,26 @@ while running:
             stats_rect = stats_surface.get_rect(center=(button_rect.centerx, button_rect.centery + 20))
             screen.blit(stats_surface, stats_rect)
 
+    # Draw the "Items" button
+    pygame.draw.rect(screen, button_color, items_button_rect)
+    items_text_surface = font.render("Items", True, button_text_color)
+    items_text_rect = items_text_surface.get_rect(center=items_button_rect.center)
+    screen.blit(items_text_surface, items_text_rect)
+
+    # Draw the "Escape" button
     pygame.draw.rect(screen, button_color, bottom_right_button_rect)
     escape_text_surface = font.render("Escape", True, button_text_color)
     escape_text_rect = escape_text_surface.get_rect(center=bottom_right_button_rect.center)
     screen.blit(escape_text_surface, escape_text_rect)
+
     pygame.display.flip()
+
+import json
+
+# At the end of the script, before exiting
+# Serialize the updated inventory and print it
+print(json.dumps(inventory))
+sys.stdout.flush()
 
 pygame.quit()
 sys.exit()
