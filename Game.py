@@ -37,7 +37,9 @@ randomWinCell = 900 # Change to 900 when finished testing
 items = {
     "Health Potion",
     "Damage Boost",
-    "Weaken Potion"
+    "Weaken Potion",
+    "Speed Potion",
+    "Accuracy Potion"
 }
 
 inventory = [] # Initialize inventory as an empty list
@@ -367,7 +369,7 @@ def obtain_item_selection():
     items_list = list(items)
 
     # Set up the pop-up window dimensions
-    popup_width, popup_height = 400, 300
+    popup_width, popup_height = 400, 400
     popup = pygame.Surface((popup_width, popup_height))
     popup.fill((50, 50, 50))  # Dark gray background
 

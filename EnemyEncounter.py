@@ -140,7 +140,7 @@ attack_stats = {
 
 attack_enemy_list = ["Tackle", "Scratch", "Block", "Recovery"]
 
-last_item_used = None
+last_items_used = []
 
 last_enemy_attack = None
 
@@ -166,15 +166,22 @@ character = make_character(character_name)
 enemy = make_enemy()
 # Function to handle attack selection
 def attack(attack_name, stats):
-    global last_player_attack
+    global last_player_attack, last_items_used
+    print(f"Last item used: {last_items_used}")
     print(f"{character_name} used {attack_name}! Damage: {stats['damage']}, Accuracy: {stats['accuracy']}%")
     player_action()
     if attack_name != "Block" and attack_name != "Dodge" and attack_name != "Cloak":
         hitOrMiss = random.randint(1, 100)
+        if "Accuracy Potion" in last_items_used:
+            stats["accuracy"] += 20
+            print(f"Accuracy increased to {stats['accuracy']}%")
         if hitOrMiss <= stats["accuracy"]:
             print("You hit!")
             print("last attack: ", f"{last_enemy_attack}")
-            if attack_name == "Drain Life": # Not fully functional
+            if "Damage Boost" in last_items_used:
+                stats["damage"] *= 2
+                print(f"Damage increased to {stats['damage']}")
+            if attack_name == "Drain Life":
                 character["health"] += 10
                 print(f"Character health: {character['health']}")
                 if last_enemy_attack == "Block":
@@ -217,7 +224,9 @@ def attack(attack_name, stats):
                 sys.stdout.flush()
                 pygame.quit()
                 sys.exit()
-            else :
+            else:
+                if "Speed Boost" in last_items_used:
+                    print("Speed Boost detected")
                 enemy_attack()
         else:
             print("You missed!")
@@ -228,9 +237,19 @@ def attack(attack_name, stats):
         print("You blocked!")
         enemy_attack()
 
+    # Clear the last_items_used list but keep "Weaken Potion"
+    last_items_used = [item for item in last_items_used if item == "Weaken Potion"]
+
 # Function to handle enemy attack
 def enemy_attack():
-    global last_enemy_attack
+    global last_enemy_attack, last_items_used
+    print(f"Items used by player: {last_items_used}")
+    
+    # Prevent enemy attack if "Speed Boost" is in last_items_used
+    if "Speed Potion" in last_items_used:
+        print("Speed Boost active, skipping enemy attack.")
+        return
+
     Start_time = time.time()
     while time.time() - Start_time < 0.5:
         pass
@@ -242,6 +261,10 @@ def enemy_attack():
         last_enemy_attack = attack_enemy
         if hitOrMiss <= enemy["accuracy"]:
             EnemyHitDamage = enemy_damage(enemycounter)
+            if "Weaken Potion" in last_items_used:
+                previous_attack = EnemyHitDamage
+                EnemyHitDamage /= 2
+                print(f"Enemy attack decreased from {previous_attack} to {EnemyHitDamage}")
             print("Enemy hit!")
             print("Enemy hit damage: ", EnemyHitDamage)
             print("last player attack: ", f"{last_player_attack}")
@@ -257,6 +280,11 @@ def enemy_attack():
                 character["health"] -= EnemyHitDamage
                 enemy_hit(EnemyHitDamage)
                 player_health_check()
+            
+            # Remove "Weaken Potion" from last_items_used after the enemy attack hits
+            if "Weaken Potion" in last_items_used:
+                last_items_used.remove("Weaken Potion")
+            
             print(f"Character health: {character['health']}")
             if character["health"] <= 0:
                 print("You lost!")
@@ -774,7 +802,7 @@ def show_inventory(inventory):
 
     root = tk.Tk()
     root.title("Inventory")
-    root.geometry("300x300")
+    root.geometry("250x375")
 
     # Add a label for the inventory title
     label = tk.Label(root, text="Your Inventory", font=("Arial", 14))
@@ -802,17 +830,24 @@ def use_item(item_name):
     Handles the usage of an item from the inventory.
     Removes the item from the inventory after use.
     """
-    global inventory
+    global inventory, last_items_used
     if item_name == "Health Potion":
         character["health"] += 20
+        last_items_used.append(item_name)
         print(f"{character_name} used {item_name} and recovered 20 health!")
         print(f"Character health: {character['health']}")
     elif item_name == "Damage Boost":
-        character["attack"] += 10
-        print(f"{character_name} used {item_name} and gained 10 attack!")
+        last_items_used.append(item_name)
+        print(f"{character_name} used {item_name} and gained double damage!")
     elif item_name == "Weaken Potion":
-        character["defense"] += 10
-        print(f"{character_name} used {item_name} and gained 10 defense!")
+        last_items_used.append(item_name)
+        print(f"{character_name} used {item_name} and enemy is weakened!")
+    elif item_name == "Speed Potion":
+        last_items_used.append(item_name)
+        print(f"{character_name} used {item_name} and gained another turn!")
+    elif item_name == "Accuracy Potion":
+        last_items_used.append(item_name)
+        print(f"{character_name} used {item_name} and increased accuracy!")
     else:
         print(f"{item_name} has no effect.")
 
