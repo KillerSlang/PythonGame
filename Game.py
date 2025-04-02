@@ -6,7 +6,6 @@ import time
 import json  # Add this import for JSON serialization
 
 # Concept ideas:
-# Items: Health Potion, Mana Potion, Revive Scroll, Damage Boost?
 # Enemies: Normal, Elite, Boss?
 # Cheatcode/secret input?
 

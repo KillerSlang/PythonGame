@@ -5,7 +5,7 @@ import random
 import tkinter as tk
 from tkinter import messagebox
 import time
-import json  # Add this import for JSON deserialization
+import json
 
 pygame.init()
 
