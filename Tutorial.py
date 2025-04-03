@@ -155,35 +155,42 @@ def draw_health_bar(screen, x, y, health, max_health, width=100, height=15):
     pygame.draw.rect(screen, (red, green, 0), (x, y, int(width * health_ratio), height))  # Health
 
 def tutorial_healthbar():
-    """Displays a health bar tutorial."""
+    """Displays a health bar tutorial for both the enemy and the player."""
     running_tutorial = True
-    health = 100
-    max_health = 100
+    enemy_health = 100
+    enemy_max_health = 100
+    player_health = 100
+    player_max_health = 100
 
     while running_tutorial:
         screen.fill((0, 0, 0))  # Clear screen
         draw_buttons()  # Keep buttons visible
 
-        # Draw health bar
-        health_bar_x = screen.get_width() // 2 - 50
-        health_bar_y = 50
-        draw_health_bar(screen, health_bar_x, health_bar_y, health, max_health)
+        # Draw enemy health bar
+        enemy_health_bar_x = screen.get_width() // 2 - 50
+        enemy_health_bar_y = 50
+        draw_health_bar(screen, enemy_health_bar_x, enemy_health_bar_y, enemy_health, enemy_max_health)
 
-        # Position tutorial box underneath the health bar
-        tutorial_box_y = health_bar_y + 50 + 20  # 20 pixels below the health bar
+        # Draw player health bar above the dialog bar
+        player_health_bar_x = 50
+        player_health_bar_y = screen.get_height() - 200  # Adjusted to be above the dialog bar
+        draw_health_bar(screen, player_health_bar_x, player_health_bar_y, player_health, player_max_health, width=200, height=20)
+
+        # Position tutorial box underneath the health bars
+        tutorial_box_y = enemy_health_bar_y + 50 + 20  # 20 pixels below the enemy health bar
         stats_box = pygame.Rect(20, tutorial_box_y, 1240, 130)
         pygame.draw.rect(screen, (0, 0, 0), stats_box)
         pygame.draw.rect(screen, (255, 255, 255), stats_box, 2)
 
         font = pygame.font.Font(None, 36)
-        text = font.render("This is the enemy health bar. It shows your enemy's current health.", True, (255, 255, 255))
-        bottom_text = font.render("Enemies will die if their health reaches 0, however they can recover health each turn.", True, (255, 255, 255))
+        text = font.render("The top bar shows the enemy's health, and the bottom bar shows your health.", True, (255, 255, 255))
+        bottom_text = font.render("Keep an eye on your health to avoid losing the battle!", True, (255, 255, 255))
 
         screen.blit(text, (40, tutorial_box_y + 20))
         screen.blit(bottom_text, (40, tutorial_box_y + 60))
 
         # Continue button
-        continue_button = pygame.Rect(560, tutorial_box_y + 350, 200, 50)
+        continue_button = pygame.Rect(560, tutorial_box_y + 150, 200, 50)
         pygame.draw.rect(screen, (255, 50, 200), continue_button)
         continue_text = font.render("Continue", True, (255, 255, 255))
         continue_text_rect = continue_text.get_rect(center=continue_button.center)
@@ -199,10 +206,10 @@ def tutorial_healthbar():
                     running_tutorial = False  # Exit tutorial
                     tutorial_escape()  # Call tutorial_escape after clicking Continue
 
-        # Decrease health over time
-        health -= 2  # Adjust the decrement value as needed
-        if health < 0:
-            health = 100  # Ensure health doesn't go below 0
+        # Decrease enemy health over time for demonstration
+        enemy_health -= 2  # Adjust the decrement value as needed
+        if enemy_health < 0:
+            enemy_health = 100  # Reset enemy health for demonstration
 
         pygame.time.delay(100)  # Add a delay to control the speed of health decrease
 

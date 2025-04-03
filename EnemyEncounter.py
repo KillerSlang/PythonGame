@@ -9,7 +9,7 @@ import json
 
 pygame.init()
 
-# Healthbar for player?
+# Level-up system? Upgrade health, attack, defense?
 
 # Get character name from command line arguments
 character_name = sys.argv[1] if len(sys.argv) > 1 else "Unknown"
@@ -889,6 +889,9 @@ while running:
 
     # Draw the health bar at a fixed position relative to the window
     draw_health_bar(screen, screen.get_width() // 2 - 50, 50, enemy["health"], enemy_health(enemycounter))
+
+    # Draw the health bar for the player
+    draw_health_bar(screen, 50, screen.get_height() - (2 * button_height + button_margin) - 50, character["health"], character_stats[character_name]["health"], width=200, height=20)
 
     attacks_with_stats = chosen_attacks()
 

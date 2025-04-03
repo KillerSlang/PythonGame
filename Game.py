@@ -3,7 +3,7 @@ import sys
 import random
 import subprocess
 import time
-import json  # Add this import for JSON serialization
+import json
 
 # Concept ideas:
 # Enemies: Normal, Elite, Boss?
@@ -43,9 +43,13 @@ items = {
 
 inventory = [] # Initialize inventory as an empty list
 
+# Add a global flag to track if a battle is in progress
+battle_in_progress = False
+
 # Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
-    global battle_result, inventory
+    global battle_result, inventory, battle_in_progress
+    battle_in_progress = True  # Set the flag to True when the battle starts
     # Serialize the inventory to a JSON string
     inventory_json = json.dumps(inventory)
     
@@ -91,6 +95,7 @@ def run_battle(character_name, enemycounter):
     
     # Print the inventory after the battle
     print("Inventory after battle:", inventory)
+    battle_in_progress = False  # Reset the flag when the battle ends
 
 # Function to generate the starting grid
 def starting_grid():
@@ -515,7 +520,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN and not battle_in_progress:  # Disable input during battle
             if dot_position != None:  # Only process movement if the dot exists
                 new_position = dot_position[:]
                 direction = None
