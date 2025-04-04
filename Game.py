@@ -7,7 +7,7 @@ import json
 
 # Concept ideas:
 # Enemies: Normal, Elite, Boss?
-# Cheatcode/secret input?
+# Cheatcode/secret do what?
 
 # Initialize Pygame
 pygame.init()
@@ -32,6 +32,8 @@ battle_result = None # used to decide the color of the cell after battle
 cellGameWon = False # used to reload the map or finish the game after the correct cell has been found
 gameWinCell = None
 randomWinCell = 900 # Change to 900 when finished testing
+cheatcode = False # used to check if the player has entered a cheat code
+cheatcode_input = "" # used to check the input of the cheat code
 
 items = {
     "Health Potion",
@@ -331,19 +333,6 @@ def random_field(grid, direction, dot_position):
 
 last_shape = None
 
-# Functions to rotate a shape depending on the direction
-def rotate_shape_left(shape):
-    return [(-y, x) for x, y in shape]
-
-def rotate_shape_right(shape):
-    return [(y, x) for x, y in shape]
-
-def rotate_shape_down(shape):
-    return [(x, y) for x, y in shape]
-
-def rotate_shape_up(shape):
-    return [(x, -y) for x, y in shape]
-
 # Function to change value of cell to "Cleared" after winning a battle
 def fight_won():
     global grid, dot_position, battle_result
@@ -521,7 +510,19 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN and not battle_in_progress:  # Disable input during battle
-            if dot_position != None:  # Only process movement if the dot exists
+            # Track cheat code input
+            if event.key == pygame.K_BACKSPACE:  # Reset cheatcode_input on backspace
+                cheatcode_input = ""
+                print("Cheat code input reset.")
+            elif event.unicode.isalpha():  # Only consider alphabetic keys
+                cheatcode_input += event.unicode.lower()  # Append the key to cheatcode_input
+                if len(cheatcode_input) > len("twintigdecember"):  # Limit the length of cheatcode_input
+                    cheatcode_input = cheatcode_input[-len("twintigdecember"):]
+                if cheatcode_input == "twintigdecember":  # Check if the cheat code is entered
+                    cheatcode = True
+                    print("Cheat code activated!")
+
+            if dot_position is not None:  # Only process movement if the dot exists
                 new_position = dot_position[:]
                 direction = None
                 if event.key == pygame.K_a:  # Move left
