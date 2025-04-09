@@ -911,39 +911,55 @@ def randomize_exp_gain():
     Randomizes the amount of EXP gained after a fight.
     :return: A random EXP value between 10 and 50.
     """
-    return random.randint(90, 120)
+    return random.randint(10, 80)
 
 def upgrade_character(character):
     """
-    Allows the player to choose which stat to upgrade upon leveling up.
+    Allows the player to choose which stat to upgrade upon leveling up using a pop-up window.
     :param character: The character's stats dictionary.
     """
-    print(f"{character_name} is leveling up! Choose a stat to upgrade:")
-    print("1. Health")
-    print("2. Attack")
-    print("3. Defense")
+    def on_upgrade(stat):
+        if stat == "health":
+            character["health"] += 10
+            print(f"{character_name}'s Health increased to {character['health']}!")
+        elif stat == "attack":
+            character["attack"] += 10
+            print(f"{character_name}'s Attack increased to {character['attack']}!")
+        elif stat == "defense":
+            character["defense"] += 10
+            print(f"{character_name}'s Defense increased to {character['defense']}!")
+        root.destroy()  # Close the pop-up window
 
-    # Wait for the player to choose a stat
-    valid_choice = False
-    while not valid_choice:
-        try:
-            choice = int(input("Enter the number of the stat to upgrade (1/2/3): "))
-            if choice == 1:
-                character["health"] += 10
-                print(f"{character_name}'s Health increased to {character['health']}!")
-                valid_choice = True
-            elif choice == 2:
-                character["attack"] += 10
-                print(f"{character_name}'s Attack increased to {character['attack']}!")
-                valid_choice = True
-            elif choice == 3:
-                character["defense"] += 10
-                print(f"{character_name}'s Defense increased to {character['defense']}!")
-                valid_choice = True
-            else:
-                print("Invalid choice. Please enter 1, 2, or 3.")
-        except ValueError:
-            print("Invalid input. Please enter a number (1/2/3).")
+    # Create the pop-up window
+    root = tk.Tk()
+    root.title("Level Up!")
+
+    # Calculate the center position of the screen
+    window_width, window_height = 400, 200
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    position_x = (screen_width // 2) - (window_width // 2)
+    position_y = (screen_height // 2) - (window_height // 2)
+
+    # Set the geometry to center the window
+    root.geometry(f"{window_width}x{window_height}+{position_x}+{position_y}")
+
+    # Add a label to prompt the player
+    label = tk.Label(root, text=f"{character_name} leveled up! Choose a stat to upgrade:", font=("Arial", 12))
+    label.pack(pady=10)
+
+    # Add buttons for each stat
+    health_button = tk.Button(root, text="Health", command=lambda: on_upgrade("health"), font=("Arial", 12))
+    health_button.pack(pady=5)
+
+    attack_button = tk.Button(root, text="Attack", command=lambda: on_upgrade("attack"), font=("Arial", 12))
+    attack_button.pack(pady=5)
+
+    defense_button = tk.Button(root, text="Defense", command=lambda: on_upgrade("defense"), font=("Arial", 12))
+    defense_button.pack(pady=5)
+
+    # Run the tkinter main loop
+    root.mainloop()
 
 def update_exp(character):
     """
