@@ -21,6 +21,15 @@ print(f"Enemy counter: {enemycounter}")
 # Parse the inventory from command-line arguments
 inventory = json.loads(sys.argv[3]) if len(sys.argv) > 3 else []
 
+# Parse the character stats from command-line arguments
+character = json.loads(sys.argv[4]) if len(sys.argv) > 4 else {
+    "health": 100,
+    "attack": 10,
+    "defense": 10,
+    "exp": 0
+}
+print(f"Character stats: {character}")
+
 # Function to calculate enemy health depending on enemy counter
 def enemy_health(enemycounter):
     return 100 * enemycounter
@@ -113,9 +122,9 @@ if enemycounter == 1:
 
 # Character stats dictionary
 character_stats = {
-    "Gunner": {"health": 100, "attack": 55, "defense": 35},
-    "Swordman": {"health": 120, "attack": 40, "defense": 40},
-    "Warlock": {"health": 80, "attack": 70, "defense": 20}
+    "Gunner": {"health": 100, "attack": 55, "defense": 35, "exp": 0},
+    "Swordman": {"health": 120, "attack": 40, "defense": 40, "exp": 0},
+    "Warlock": {"health": 80, "attack": 70, "defense": 20, "exp": 0}
 }
 
 # Attack stats dictionary
@@ -146,9 +155,37 @@ last_enemy_attack = None
 
 last_player_attack = None
 
-# Function to make character
-def make_character(character_name):
-    return {"health": character_stats[character_name]["health"], "attack": character_stats[character_name]["attack"], "defense": character_stats[character_name]["defense"]}
+# Function to make or update a character
+def make_character(character_name, new_stats=None):
+    """
+    Creates or updates a character's stats.
+    
+    :param character_name: The name of the character.
+    :param new_stats: A dictionary containing updated stats (optional).
+    :return: The character's stats.
+    """
+    # Load existing stats from a file if available
+    try:
+        with open("character_stats.json", "r") as file:
+            saved_stats = json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        saved_stats = {}
+
+    # If new stats are provided, update and save them
+    if new_stats:
+        saved_stats[character_name] = new_stats
+        with open("character_stats.json", "w") as file:
+            json.dump(saved_stats, file, indent=4)
+        print(f"Updated stats for {character_name}: {new_stats}")
+        return new_stats
+
+    # Return existing stats if available, otherwise use the current character dictionary
+    if character_name in saved_stats:
+        print(f"Loaded saved stats for {character_name}: {saved_stats[character_name]}")
+        return saved_stats[character_name]
+    else:
+        print(f"Using current character stats for {character_name}: {character}")
+        return character
 
 # Function to get character-specific attacks
 def chosen_attacks():
@@ -216,7 +253,15 @@ def attack(attack_name, stats):
             last_player_attack = attack_name
             if enemy["health"] <= 0:
                 print("Win condition met")
-                game_won()
+                game_won()# Example of printing debug messages to stderr
+                print("Debug: Battle completed successfully.", file=sys.stderr)
+
+                # Final JSON output
+                output_data = {
+                    "inventory": inventory,
+                    "character": character
+                }
+                print(json.dumps(output_data))  # Only this should go to stdout
                 sys.stdout.flush()
                 time.sleep(1)
                 result = "Win"
@@ -616,8 +661,6 @@ def enemy_miss():
 def game_won():
     """
     Display an action message in a black box with a white border.
-    
-    :param action_text: The text to display inside the box.
     """
     # Box position (in front of the enemy)
     box_width, box_height = 1200, 100
@@ -663,6 +706,9 @@ def game_won():
     screen.fill((0, 0, 0))
     screen.blit(enemy_image, (enemy_x, enemy_y))
     pygame.display.flip()
+
+    # Update EXP after winning the fight
+    update_exp(character)
 
 # Function to show the player they tried to escape
 def escape_attempt():
@@ -859,6 +905,62 @@ def use_item(item_name):
     print(json.dumps(inventory))
     sys.stdout.flush()
 
+# Function to randomize EXP gained per fight
+def randomize_exp_gain():
+    """
+    Randomizes the amount of EXP gained after a fight.
+    :return: A random EXP value between 10 and 50.
+    """
+    return random.randint(90, 120)
+
+def upgrade_character(character):
+    """
+    Allows the player to choose which stat to upgrade upon leveling up.
+    :param character: The character's stats dictionary.
+    """
+    print(f"{character_name} is leveling up! Choose a stat to upgrade:")
+    print("1. Health")
+    print("2. Attack")
+    print("3. Defense")
+
+    # Wait for the player to choose a stat
+    valid_choice = False
+    while not valid_choice:
+        try:
+            choice = int(input("Enter the number of the stat to upgrade (1/2/3): "))
+            if choice == 1:
+                character["health"] += 10
+                print(f"{character_name}'s Health increased to {character['health']}!")
+                valid_choice = True
+            elif choice == 2:
+                character["attack"] += 10
+                print(f"{character_name}'s Attack increased to {character['attack']}!")
+                valid_choice = True
+            elif choice == 3:
+                character["defense"] += 10
+                print(f"{character_name}'s Defense increased to {character['defense']}!")
+                valid_choice = True
+            else:
+                print("Invalid choice. Please enter 1, 2, or 3.")
+        except ValueError:
+            print("Invalid input. Please enter a number (1/2/3).")
+
+def update_exp(character):
+    """
+    Updates the character's EXP and resets it to 0 if it reaches 100.
+    Any excess EXP is carried over after the reset.
+    :param character: The character's stats dictionary.
+    """
+    exp_gain = randomize_exp_gain()
+    character["exp"] += exp_gain
+    print(f"{character_name} gained {exp_gain} EXP! Total EXP: {character['exp']}")
+
+    if character["exp"] >= 100:
+        excess_exp = character["exp"] - 100
+        character["exp"] = excess_exp  # Carry over the excess EXP
+        print(f"{character_name} leveled up! EXP reset to {excess_exp}.")
+        upgrade_character(character)  # Trigger character upgrade
+
 show_stats = False
 running = True
 
@@ -921,13 +1023,6 @@ while running:
     screen.blit(escape_text_surface, escape_text_rect)
 
     pygame.display.flip()
-
-import json
-
-# At the end of the script, before exiting
-# Serialize the updated inventory and print it
-print(json.dumps(inventory))
-sys.stdout.flush()
 
 pygame.quit()
 sys.exit()

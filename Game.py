@@ -4,10 +4,11 @@ import random
 import subprocess
 import time
 import json
+import webbrowser
 
 # Concept ideas:
 # Enemies: Normal, Elite, Boss?
-# Cheatcode/secret do what?
+# Cheatcode/secret do what? pornhub? something funny? easytoys?
 
 # Initialize Pygame
 pygame.init()
@@ -48,26 +49,42 @@ inventory = [] # Initialize inventory as an empty list
 # Add a global flag to track if a battle is in progress
 battle_in_progress = False
 
+# Add a global variable to store character stats
+character_stats = {
+    "Gunner": {"health": 100, "attack": 55, "defense": 35, "exp": 0},
+    "Swordman": {"health": 120, "attack": 40, "defense": 40, "exp": 0},
+    "Warlock": {"health": 80, "attack": 70, "defense": 20, "exp": 0}
+}
+
+# Select the stats for the current character
+if character_name in character_stats:
+    character_stats = character_stats[character_name]
+else:
+    character_stats = {"health": 100, "attack": 10, "defense": 10, "exp": 0}  # Default stats
+
 # Function to run the battle and get the result
 def run_battle(character_name, enemycounter):
-    global battle_result, inventory, battle_in_progress
+    global battle_result, inventory, battle_in_progress, character_stats
     battle_in_progress = True  # Set the flag to True when the battle starts
-    # Serialize the inventory to a JSON string
+    print(f"stats before conversion: : {character_stats}")
+
+    # Serialize the inventory and character stats to JSON strings
     inventory_json = json.dumps(inventory)
-    
+    character_stats_json = json.dumps(character_stats)
+    print(f"stats after conversion: {character_stats_json}")
+
     # Construct the command with arguments
-    command = ["python", "EnemyEncounter.py", character_name, str(enemycounter), inventory_json]
-    
+    command = ["python", "EnemyEncounter.py", character_name, str(enemycounter), inventory_json, character_stats_json]
+
     # Start the subprocess with Popen
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    
+
     # Read output and error as they are generated
-    updated_inventory = None
     while True:
         output = process.stdout.readline()
         if output == "" and process.poll() is not None:
             break
-        if output:
+        if output.strip():  # Ignore empty lines
             print(f"File 1: Received -> {output.strip()}")
             if output.strip() == "Win":
                 print(f"File 1: Received Final message -> Game won!")
@@ -79,24 +96,31 @@ def run_battle(character_name, enemycounter):
                 print(f"File 1: Received Final message -> Game lost!")
                 fight_lost()
             else:
-                # Attempt to parse the updated inventory
+                # Attempt to parse the combined JSON output
                 try:
-                    updated_inventory = json.loads(output.strip())
+                    data = json.loads(output.strip())
+                    if "inventory" in data and "character" in data:
+                        inventory = data["inventory"]
+                        character_stats = data["character"]
+                        print(f"Updated inventory received: {inventory}")
+                        print(f"Updated character stats received: {character_stats}")
+                    else:
+                        print(f"Unexpected JSON structure: {data}")
                 except json.JSONDecodeError:
-                    pass
-            
-    # Capture any errors
+                    print(f"Non-JSON output received: {output.strip()}")
+
+    # Capture all output for debugging
     stderr_output = process.stderr.read().strip()
     if stderr_output:
         print(f"File 1: Error -> {stderr_output}")
-    
-    # Update the inventory if it was returned
-    if updated_inventory is not None:
-        inventory = updated_inventory
-        print(f"Updated inventory: {inventory}")
-    
-    # Print the inventory after the battle
+
+    stdout_output = process.stdout.read().strip()
+    if stdout_output:
+        print(f"File 1: Full stdout -> {stdout_output}")
+
+    # Print the inventory and character stats after the battle
     print("Inventory after battle:", inventory)
+    print("Character stats after battle:", character_stats)
     battle_in_progress = False  # Reset the flag when the battle ends
 
 # Function to generate the starting grid
@@ -415,7 +439,7 @@ def obtain_item_selection():
     if selected_item:
         print(f"You selected: {selected_item}")
         # Randomly select an item with more odds to the selected item
-        item = random.choices([selected_item] + items_list, weights=[3] + [1] * len(items_list), k=1)[0]
+        item = random.choices([selected_item] + items_list, weights=[4] + [1] * len(items_list), k=1)[0]
         inventory.append(item)
         print(f"Item obtained: {item}")
     else:
@@ -499,6 +523,15 @@ def can_move_to(position, grid):
             return grid[y][x] == 1
     return False
 
+# Function to open a browser window when the cheat code is activated
+def activate_cheat_code():
+    global cheatcode
+    if cheatcode:
+        url = "https://www.example.com"  # Replace with the desired URL
+        print("Cheat code activated! Opening browser...")
+        webbrowser.open(url)
+        cheatcode = False  # Reset the cheatcode flag to prevent repeated triggers
+
 # Main game loop
 running = True
 grid = starting_grid()
@@ -520,7 +553,7 @@ while running:
                     cheatcode_input = cheatcode_input[-len("twintigdecember"):]
                 if cheatcode_input == "twintigdecember":  # Check if the cheat code is entered
                     cheatcode = True
-                    print("Cheat code activated!")
+                    activate_cheat_code()  # Call the function to open the browser
 
             if dot_position is not None:  # Only process movement if the dot exists
                 new_position = dot_position[:]
