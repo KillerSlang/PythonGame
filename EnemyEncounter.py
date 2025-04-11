@@ -122,9 +122,9 @@ if enemycounter == 1:
 
 # Character stats dictionary
 character_stats = {
-    "Gunner": {"health": 100, "attack": 55, "defense": 35, "exp": 0},
-    "Swordman": {"health": 120, "attack": 40, "defense": 40, "exp": 0},
-    "Warlock": {"health": 80, "attack": 70, "defense": 20, "exp": 0}
+    "Gunner": {"health": 100, "attack": 1, "defense": 35, "exp": 0},
+    "Swordman": {"health": 120, "attack": 1, "defense": 40, "exp": 0},
+    "Warlock": {"health": 80, "attack": 1, "defense": 20, "exp": 0}
 }
 
 # Attack stats dictionary
@@ -181,6 +181,8 @@ def make_character(character_name, new_stats=None):
 
     # Return existing stats if available, otherwise use the current character dictionary
     if character_name in saved_stats:
+        # Reset health to its original value
+        saved_stats[character_name]["health"] = character_stats[character_name]["health"]
         print(f"Loaded saved stats for {character_name}: {saved_stats[character_name]}")
         return saved_stats[character_name]
     else:
@@ -202,9 +204,10 @@ def chosen_attacks():
 character = make_character(character_name)
 enemy = make_enemy()
 # Function to handle attack selection
-def attack(attack_name, stats):
+def attack(attack_name, stats, character):
     global last_player_attack, last_items_used
     print(f"Last item used: {last_items_used}")
+    print(f"Character stats inside attack: {character}")
     print(f"{character_name} used {attack_name}! Damage: {stats['damage']}, Accuracy: {stats['accuracy']}%")
     player_action()
     if attack_name != "Block" and attack_name != "Dodge" and attack_name != "Cloak":
@@ -215,41 +218,41 @@ def attack(attack_name, stats):
         if hitOrMiss <= stats["accuracy"]:
             print("You hit!")
             print("last attack: ", f"{last_enemy_attack}")
+            print(f"Original damage: {stats['damage']}")
+            print(f"Character attack: {character_stats[character_name]['attack']}")
+            new_damage = stats["damage"] * character["attack"]
+            print(f"New damage: {new_damage}")
             if "Damage Boost" in last_items_used:
-                stats["damage"] *= 2
-                print(f"Damage increased to {stats['damage']}")
+                new_damage *= 2
+                print(f"Damage increased to {new_damage}")
             if attack_name == "Drain Life":
                 character["health"] += 10
                 print(f"Character health: {character['health']}")
                 if last_enemy_attack == "Block":
                     print("Block detected while Drain Life")
-                    original_damage = stats["damage"]
-                    stats["damage"] = stats["damage"] // 2
-                    enemy["health"] -= stats["damage"]
+                    new_damage = new_damage // 2
+                    enemy["health"] -= new_damage
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
-                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-                    stats["damage"] = original_damage
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name, new_damage)
                 else:
                     enemy["health"] -= stats["damage"]
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
-                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name, new_damage)
             else:
                 if last_enemy_attack == "Block":
                     print("Block detected")
-                    original_damage = stats["damage"]
-                    stats["damage"] = stats["damage"] // 2
-                    enemy["health"] -= stats["damage"]
+                    new_damage = new_damage // 2
+                    enemy["health"] -= new_damage
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
-                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
-                    stats["damage"] = original_damage
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name, new_damage)
                 else:
-                    enemy["health"] -= stats["damage"]
+                    enemy["health"] -= new_damage
                     print(f"Enemy health: {enemy['health']}")
                     slash_animation()
-                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name)
+                    shake_image(enemy_image, enemy_x, enemy_y, screen, character_name, attack_name, new_damage)
             last_player_attack = attack_name
             if enemy["health"] <= 0:
                 print("Win condition met")
@@ -538,7 +541,7 @@ def player_health_check():
     pygame.display.flip()
 
 # Function to shake the enemy to show hit
-def shake_image(image, x, y, screen, character, attack, duration=500):
+def shake_image(image, x, y, screen, character, attack, new_damage, duration=500):
     """
     Shake the image horizontally to indicate it has been hit.
 
@@ -548,6 +551,7 @@ def shake_image(image, x, y, screen, character, attack, duration=500):
     :param screen: The screen to draw the image on.
     :param character: The character whose intensity will be used.
     :param attack: The type of attack made.
+    :param new_damage: The damage dealt to the enemy.
     :param duration: The duration of the shake in milliseconds.
     """
     # Define intensity based on character and attack
@@ -570,7 +574,7 @@ def shake_image(image, x, y, screen, character, attack, duration=500):
     # Initialize font
     pygame.font.init()
     font = pygame.font.SysFont('Arial', 30)  # Choose font and size
-    text_surface = font.render(f"Enemy took {stats['damage']} damage!", True, (255, 255, 255))  # Render text
+    text_surface = font.render(f"Enemy took {new_damage} damage!", True, (255, 255, 255))  # Render text
 
     start_time = time.time()
 
@@ -923,7 +927,7 @@ def upgrade_character(character):
             character["health"] += 10
             print(f"{character_name}'s Health increased to {character['health']}!")
         elif stat == "attack":
-            character["attack"] += 10
+            character["attack"] += 1
             print(f"{character_name}'s Attack increased to {character['attack']}!")
         elif stat == "defense":
             character["defense"] += 10
@@ -998,7 +1002,7 @@ while running:
                 show_inventory(inventory)  # Show inventory when items button is clicked
             for button_rect, (attack_name, stats) in zip(buttonsList, chosen_attacks()):
                 if button_rect.collidepoint(event.pos):
-                    attack(attack_name, stats)
+                    attack(attack_name, stats, character)
 
     screen.fill((0, 0, 0))
     

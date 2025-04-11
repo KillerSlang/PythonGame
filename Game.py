@@ -51,9 +51,9 @@ battle_in_progress = False
 
 # Add a global variable to store character stats
 character_stats = {
-    "Gunner": {"health": 100, "attack": 55, "defense": 35, "exp": 0},
-    "Swordman": {"health": 120, "attack": 40, "defense": 40, "exp": 0},
-    "Warlock": {"health": 80, "attack": 70, "defense": 20, "exp": 0}
+    "Gunner": {"health": 100, "attack": 1, "defense": 35, "exp": 0},
+    "Swordman": {"health": 120, "attack": 1, "defense": 40, "exp": 0},
+    "Warlock": {"health": 80, "attack": 1, "defense": 20, "exp": 0}
 }
 
 # Select the stats for the current character

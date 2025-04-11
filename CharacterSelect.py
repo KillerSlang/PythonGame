@@ -27,6 +27,11 @@ character_stats = {
     "Warlock": "Health: 80\nAttack: 70\nDefense: 20"
 }
 
+# Load Images for the buttons
+gunner_image = pygame.image.load("Images/Gunslinger.png")
+swordman_image = pygame.image.load("Images/Swordman.png")
+warlock_image = pygame.image.load("Images/Warlock.png")
+
 # Function to show a pop-up with the character stats
 def show_character_dialog(character_name):
     # Function to launch main game
@@ -85,19 +90,29 @@ def warlock():
 
 # Function to draw the buttons to select the character
 def draw_button():
+    # Draw the button backgrounds
     pygame.draw.rect(window, "white", (button_gun_x, button_gun_y, 300, 600))
     pygame.draw.rect(window, "blue", (button_sword_x, button_sword_y, 300, 600))
     pygame.draw.rect(window, "purple", (button_warlock_x, button_warlock_y, 300, 600))
-    font = pygame.font.Font(None, 36)
-    text_gun = font.render("Gunner", True, (255, 0, 0))
-    text_rect_gun = text_gun.get_rect(center=(button_gun_x + 150, button_gun_y + 300))
-    window.blit(text_gun, text_rect_gun)
-    text_sword = font.render("Swordman", True, (255, 0, 0))
-    text_rect_sword = text_sword.get_rect(center=(button_sword_x + 150, button_sword_y + 300))
-    window.blit(text_sword, text_rect_sword)
-    text_warlock = font.render("Warlock", True, (255, 0, 0))
-    text_rect_warlock = text_warlock.get_rect(center=(button_warlock_x + 150, button_warlock_y + 300))
-    window.blit(text_warlock, text_rect_warlock)
+    
+    # Scale and draw the Images on the buttons
+    gunner_scaled = pygame.transform.scale(gunner_image, (300, 600))
+    swordman_scaled = pygame.transform.scale(swordman_image, (300, 600))
+    warlock_scaled = pygame.transform.scale(warlock_image, (300, 600))
+    
+    window.blit(gunner_scaled, (button_gun_x, button_gun_y))
+    window.blit(swordman_scaled, (button_sword_x, button_sword_y))
+    window.blit(warlock_scaled, (button_warlock_x, button_warlock_y))
+    
+    # Add text below each button
+    font = pygame.font.Font(None, 36)  # Default font with size 36
+    gunner_text = font.render("Gunner", True, (255, 255, 255))
+    swordman_text = font.render("Swordman", True, (255, 255, 255))
+    warlock_text = font.render("Warlock", True, (255, 255, 255))
+    
+    window.blit(gunner_text, (button_gun_x + 100, button_gun_y + 610))  # Centered below Gunner button
+    window.blit(swordman_text, (button_sword_x + 80, button_sword_y + 610))  # Centered below Swordman button
+    window.blit(warlock_text, (button_warlock_x + 100, button_warlock_y + 610))  # Centered below Warlock button
 
 running = True
 while running:
