@@ -27,6 +27,10 @@ def run_char():
     subprocess.run(["python", "CharacterSelect.py"])
     sys.exit()
 
+# Load the background image and scale it to fit the window
+background = pygame.image.load("Images/MainMenu.png")
+background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -38,7 +42,8 @@ while running:
                 run_char()
                 running = False
 
-    window.fill((0, 0, 0))
+    # Draw the background image
+    window.blit(background, (0, 0))
 
     draw_button()
 
