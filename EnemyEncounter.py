@@ -24,11 +24,12 @@ inventory = json.loads(sys.argv[3]) if len(sys.argv) > 3 else []
 # Parse the character stats from command-line arguments
 character = json.loads(sys.argv[4]) if len(sys.argv) > 4 else {
     "health": 100,
-    "attack": 10,
-    "defense": 10,
+    "attack": 1,
+    "defense": 1,
     "exp": 0
 }
 print(f"Character stats: {character}")
+health_reset = character["health"]
 
 # Function to calculate enemy health depending on enemy counter
 def enemy_health(enemycounter):
@@ -164,6 +165,10 @@ def make_character(character_name, new_stats=None):
     :param new_stats: A dictionary containing updated stats (optional).
     :return: The character's stats.
     """
+    print("Character triggered")
+    print(f"Character name: {character_name}")
+    print(f"New stats: {new_stats}")
+    print(f"Character stats: {character_stats}")
     # Load existing stats from a file if available
     try:
         with open("character_stats.json", "r") as file:
@@ -201,7 +206,7 @@ def chosen_attacks():
         attacks = ["Attack 1", "Attack 2", "Attack 3", "Attack 4"]
     return [(attack, attack_stats[attack]) for attack in attacks]
 
-character = make_character(character_name)
+character = make_character(character_name, character)
 enemy = make_enemy()
 # Function to handle attack selection
 def attack(attack_name, stats, character):
@@ -915,22 +920,25 @@ def randomize_exp_gain():
     Randomizes the amount of EXP gained after a fight.
     :return: A random EXP value between 10 and 50.
     """
-    return random.randint(10, 80)
+    return random.randint(90, 120)
 
+# Function to upgrade character stats upon leveling up
 def upgrade_character(character):
     """
     Allows the player to choose which stat to upgrade upon leveling up using a pop-up window.
     :param character: The character's stats dictionary.
     """
     def on_upgrade(stat):
+        global health_reset
         if stat == "health":
-            character["health"] += 10
+            character["health"] = health_reset
+            character["health"] += 15
             print(f"{character_name}'s Health increased to {character['health']}!")
         elif stat == "attack":
             character["attack"] += 1
             print(f"{character_name}'s Attack increased to {character['attack']}!")
         elif stat == "defense":
-            character["defense"] += 10
+            character["defense"] += 1
             print(f"{character_name}'s Defense increased to {character['defense']}!")
         root.destroy()  # Close the pop-up window
 
@@ -965,6 +973,7 @@ def upgrade_character(character):
     # Run the tkinter main loop
     root.mainloop()
 
+# Function to update EXP and reset it if it reaches 100 and trigger upgrade_character
 def update_exp(character):
     """
     Updates the character's EXP and resets it to 0 if it reaches 100.

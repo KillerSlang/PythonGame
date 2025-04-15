@@ -51,9 +51,9 @@ battle_in_progress = False
 
 # Add a global variable to store character stats
 character_stats = {
-    "Gunner": {"health": 100, "attack": 1, "defense": 35, "exp": 0},
-    "Swordman": {"health": 120, "attack": 1, "defense": 40, "exp": 0},
-    "Warlock": {"health": 80, "attack": 1, "defense": 20, "exp": 0}
+    "Gunner": {"health": 100, "attack": 1, "defense": 3, "exp": 0},
+    "Swordman": {"health": 120, "attack": 1, "defense": 5, "exp": 0},
+    "Warlock": {"health": 80, "attack": 1, "defense": 1, "exp": 0}
 }
 
 # Select the stats for the current character
@@ -527,7 +527,7 @@ def can_move_to(position, grid):
 def activate_cheat_code():
     global cheatcode
     if cheatcode:
-        url = "https://www.example.com"  # Replace with the desired URL
+        url = "https://www.youtube.com/watch?v=q4vy7BcAVJg&pp=ygUHaGFtdHBlcg%3D%3D"  # Replace with the desired URL
         print("Cheat code activated! Opening browser...")
         webbrowser.open(url)
         cheatcode = False  # Reset the cheatcode flag to prevent repeated triggers
