@@ -1034,7 +1034,8 @@ while running:
         text_rect = text_surface.get_rect(center=(button_rect.centerx, button_rect.centery + attack_name_y_offset))
         screen.blit(text_surface, text_rect)
         if show_stats:
-            stats_text = f"Dmg: {stats['damage']} Acc: {stats['accuracy']}%"
+            upgraded_damage = stats["damage"] * character["attack"]
+            stats_text = f"Dmg: {upgraded_damage} Acc: {stats['accuracy']}%"
             stats_surface = font.render(stats_text, True, button_text_color)
             stats_rect = stats_surface.get_rect(center=(button_rect.centerx, button_rect.centery + 20))
             screen.blit(stats_surface, stats_rect)
