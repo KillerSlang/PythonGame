@@ -53,8 +53,6 @@ def enemy_damage(enemycounter):
     damage = random.randint(int(halfDamage), int(damage))
     if damage < 5:
         damage = 5
-    elif damage > 40:
-        damage = 40
     return damage
 
 # Function to make enemy
@@ -168,7 +166,7 @@ def make_character(character_name, new_stats=None):
     print("Character triggered")
     print(f"Character name: {character_name}")
     print(f"New stats: {new_stats}")
-    print(f"Character stats: {character_stats}")
+    print(f"Character stats: {character}")
     # Load existing stats from a file if available
     try:
         with open("character_stats.json", "r") as file:
@@ -187,7 +185,7 @@ def make_character(character_name, new_stats=None):
     # Return existing stats if available, otherwise use the current character dictionary
     if character_name in saved_stats:
         # Reset health to its original value
-        saved_stats[character_name]["health"] = character_stats[character_name]["health"]
+        saved_stats[character_name]["health"] = character["health"]
         print(f"Loaded saved stats for {character_name}: {saved_stats[character_name]}")
         return saved_stats[character_name]
     else:
@@ -314,6 +312,8 @@ def enemy_attack():
         last_enemy_attack = attack_enemy
         if hitOrMiss <= enemy["accuracy"]:
             EnemyHitDamage = enemy_damage(enemycounter)
+            blockingNerf = character["defense"]
+            EnemyHitDamage = EnemyHitDamage / blockingNerf
             if "Weaken Potion" in last_items_used:
                 previous_attack = EnemyHitDamage
                 EnemyHitDamage /= 2

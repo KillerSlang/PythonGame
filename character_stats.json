@@ -1,14 +1,14 @@
 {
     "Swordman": {
-        "health": 130,
-        "attack": 2,
-        "defense": 40,
-        "exp": 37
-    },
-    "Gunner": {
         "health": 120,
         "attack": 1,
-        "defense": 35,
-        "exp": 7
+        "defense": 5,
+        "exp": 0
+    },
+    "Gunner": {
+        "health": 100,
+        "attack": 1,
+        "defense": 3,
+        "exp": 0
     }
 }
