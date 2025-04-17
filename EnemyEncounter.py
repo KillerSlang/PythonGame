@@ -918,9 +918,9 @@ def use_item(item_name):
 def randomize_exp_gain():
     """
     Randomizes the amount of EXP gained after a fight.
-    :return: A random EXP value between 10 and 50.
+    :return: A random EXP value between 10 and 100.
     """
-    return random.randint(90, 120)
+    return random.randint(10, 100)
 
 # Function to upgrade character stats upon leveling up
 def upgrade_character(character):
