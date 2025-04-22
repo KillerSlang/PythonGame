@@ -2,16 +2,18 @@
 
 ## Overview
 
-PythonGame is an interactive game built using Python and Pygame. The game involves character selection, navigating through a grid-based world, encountering enemies, and engaging in battles. Players can collect items, use strategies, and progress through increasingly challenging levels.
+PythonGame is an interactive, grid-based adventure game built using Python and Pygame. Players can select a character, explore a procedurally generated world, encounter enemies, collect items, and engage in turn-based battles. The game includes a leveling system, inventory management, and a tutorial to guide new players.
 
 ## Features
 
 - **Character Selection**: Choose from three unique characters: Gunner, Swordman, or Warlock, each with distinct stats and abilities.
-- **Grid-Based Exploration**: Navigate through a procedurally generated grid world with random shapes and challenges.
-- **Enemy Encounters**: Engage in battles with enemies of varying difficulty based on progression.
+- **Grid-Based Exploration**: Navigate through a procedurally generated grid world with random shapes, enemies, and items.
+- **Enemy Encounters**: Engage in battles with enemies of increasing difficulty as you progress.
 - **Item Collection**: Collect items like Health Potions, Damage Boosts, and more to aid in battles.
 - **Dynamic Battles**: Use character-specific attacks and strategies to defeat enemies or escape.
+- **Leveling System**: Gain experience points (EXP) from battles and level up to improve your stats.
 - **Tutorial**: A step-by-step tutorial introduces players to the game's mechanics.
+- **Cheat Code**: A hidden cheat code unlocks a surprise feature.
 
 ## Prerequisites
 
