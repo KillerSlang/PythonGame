@@ -6,9 +6,9 @@
         "exp": 0
     },
     "Gunner": {
-        "health": 100,
-        "attack": 1,
+        "health": 85.0,
+        "attack": 2,
         "defense": 3,
-        "exp": 0
+        "exp": 34
     }
 }
